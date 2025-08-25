@@ -169,120 +169,37 @@ struct Index {
     }
   }
 
+  private vendors: Map<string, string>= new Map([
+    ["google", "Google.png"],
+    ["microsoft", "Microsoft.png"],
+    ["github", "Github.png"],
+    ["gitlab", "Gitlab.png"],
+    ["steam", "Steam.png"],
+    ["huawei", "Huawei.png"],
+    ["aliyun", "Aliyun.png"],
+    ["namecheap", "Namecheap.png"],
+    ["neteasemail", "NeteaseMail.png"],
+    ["nintendo", "Nintendo.png"],
+    ["nintendo account", "Nintendo.png"],
+    ["epic games", "Epic Games.png"],
+    ["cloudflare", "Cloudflare.png"],
+    ["twitter", "Twitter.png"],
+    ["nvidia", "Nvidia.png"],
+    ["ubisoft", "Ubisoft.png"],
+    ["uplay", "Ubisoft.png"],
+    ["jetbrains", "Jetbrains.png"],
+  ]);
+
   @Builder
   Logo(issuer: string) {
-    if (issuer.toLowerCase() == "google") {
-      Image($rawfile("Google.png"))
+    if (this.vendors.has(issuer.toLowerCase())) {
+      Image($rawfile(this.vendors.get(issuer.toLowerCase())))
         .width(40)
         .padding(5)
         .margin(10)
         .backgroundColor($r("app.color.vendor_background_color"))
         .borderRadius(20)
-    } else if (issuer.toLowerCase() == "microsoft") {
-      Image($rawfile("Microsoft.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "github") {
-      Image($rawfile("Github.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "gitlab") {
-      Image($rawfile("Gitlab.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "steam") {
-      Image($rawfile("Steam.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "huawei") {
-      Image($rawfile("Huawei.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "aliyun") {
-      Image($rawfile("Aliyun.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "namecheap") {
-      Image($rawfile("Namecheap.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "neteasemail") {
-      Image($rawfile("NeteaseMail.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "nintendo" || issuer.toLowerCase() == "nintendo account") {
-      Image($rawfile("Nintendo.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "epic games") {
-      Image($rawfile("Epic Games.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "cloudflare") {
-      Image($rawfile("Cloudflare.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "twitter") {
-      Image($rawfile("Twitter.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "nvidia") {
-      Image($rawfile("Nvidia.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "ubisoft" || issuer.toLowerCase() == "uplay") {
-      Image($rawfile("Ubisoft.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else if (issuer.toLowerCase() == "jetbrains") {
-      Image($rawfile("Jetbrains.png"))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
+        .draggable(false)
     } else {
       SymbolGlyph($r("sys.symbol.person"))
         .fontSize(30)
@@ -371,6 +288,9 @@ struct Index {
                 this.dragItem = item
               })
               .onDragEnter((event?: DragEvent, extraParams?: string) => {
+                if (!this.dragItem) {
+                  return
+                }
                 if (item.id == this.dragItem?.id) {
                   return
                 }
