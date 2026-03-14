@@ -48,7 +48,7 @@ function buildSteamInput(params: PromptParams<SteamParams>) {
             data.steamID = authdata["steam_id"] as string
             data.serialNumber = authdata["serial_number"] as string
             data.revocationCode = authdata["revocation_code"] as string
-            data.shardSecret = authdata["shared_secret"] as string
+            data.sharedSecret = authdata["shared_secret"] as string
             data.tokenGID = authdata["token_gid"] as string
             data.identitySecret = authdata["identity_secret"] as string
             data.uri = authdata["uri"] as string
@@ -126,7 +126,28 @@ export struct Detail {
       return
     }
     try {
-      this.steamAuthData = JSON.parse(this.item.external) as SteamAuthData
+      let authdata = JSON.parse(this.item.external) as Record<string, Object>
+      this.steamAuthData = new SteamAuthData()
+
+      if (authdata["sharedSecret"] == undefined){
+        this.steamAuthData.sharedSecret = authdata["shardSecret"] as string
+      }else{
+        this.steamAuthData.sharedSecret = authdata["sharedSecret"] as string
+      }
+
+      this.steamAuthData.accountName = authdata["accountName"] as string
+      this.steamAuthData.steamID = authdata["steamID"] as string
+      this.steamAuthData.serialNumber = authdata["serialNumber"] as string
+      this.steamAuthData.revocationCode = authdata["revocationCode"] as string
+      this.steamAuthData.tokenGID = authdata["tokenGID"] as string
+      this.steamAuthData.identitySecret = authdata["identitySecret"] as string
+      this.steamAuthData.uri = authdata["uri"] as string
+      this.steamAuthData.deviceID = authdata["deviceID"] as string
+      this.steamAuthData.secret1 = authdata["secret1"] as string
+      this.steamAuthData.accessToken = authdata["accessToken"] as string
+      this.steamAuthData.refreshToken = authdata["refreshToken"] as string
+      
+      
       let parts = this.steamAuthData.refreshToken.split(".")
       let base64 = new util.Base64Helper()
       let data = base64.decodeSync(parts[1], util.Type.BASIC_URL_SAFE)
@@ -161,7 +182,7 @@ export struct Detail {
     try {
       scanBarcode.startScanForResult(getContext(this), options).then((result: scanBarcode.ScanResult) => {
         this.steamClient.approveQRLogin(this.steamAuthData.steamID, this.steamAuthData.refreshToken,
-          this.steamAuthData.shardSecret, false, result.originalValue,
+          this.steamAuthData.sharedSecret, false, result.originalValue,
           (err) => {
             if (err) {
               this.getUIContext().getPromptAction().showToast({
