@@ -1,14 +1,15 @@
-import { systemDateTime } from '@kit.BasicServicesKit';
-import { ComponentContent } from "@kit.ArkUI";
+﻿import { systemDateTime } from '@kit.BasicServicesKit';
+import { ComponentContent } from '@kit.ArkUI';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { buffer, JSON, uri, util } from '@kit.ArkTS';
 import { distributedKVStore } from '@kit.ArkData';
-import { kvManager } from '../entryability/EntryAbility';
-import * as steamapi from './steamapi/custom'
-import * as steam2faapi from './steamapi/service_twofactor'
-import * as googleapi from './googleapi/otpauth_migrate'
+import { getLocalizedString, kvManager } from '../entryability/EntryAbility';
+import * as steamapi from './steamapi/custom';
+import * as steam2faapi from './steamapi/service_twofactor';
+import * as googleapi from './googleapi/otpauth_migrate';
 
 export let DefaultToastDuration = 5000
+
 
 export class AuthData {
   id: number = 0
@@ -61,7 +62,7 @@ export class AuthDataStore {
       securityLevel: distributedKVStore.SecurityLevel.S2,
     }, (err: Error, store: distributedKVStore.DeviceKVStore) => {
       if (err) {
-        throw err
+        throw new Error(err.message)
       }
       this.kvStore = store
       this.kvStore.getEntries("/data/auth/", (err, data) => {
@@ -253,7 +254,8 @@ export class AuthDataStore {
       return
     }
     if (authURI.scheme != "otpauth" || authURI.host != "totp") {
-      throw new Error(`无效的协议：${authURI.scheme}://${authURI.host}`);
+      throw new Error(getLocalizedString($r('app.string.base_invalid_scheme_format'),
+        `${authURI.scheme}://${authURI.host}`));
     }
     let secret = authURI.getQueryValue("secret")
     let issuer = authURI.getQueryValue("issuer")
@@ -294,7 +296,7 @@ export class AuthDataStore {
   recoverAuthItem(data: string) {
     let result = JSON.parse(data) as AuthData[]
     if (!result) {
-      throw new Error("未知的文件格式")
+      throw new Error(getLocalizedString($r('app.string.base_unknown_file_format')))
     }
     for (let index = 0; index < result.length; index++) {
       const element = result[index];
@@ -303,7 +305,7 @@ export class AuthDataStore {
           return;
         }
         if (pair[1] == undefined) {
-          throw new Error(`第 ${index} 个令牌密钥缺少 ${pair[0]}`)
+          throw new Error(getLocalizedString($r('app.string.base_recover_item_missing_format'), index, pair[0]))
         }
       })
     }
@@ -327,10 +329,9 @@ export class AuthDataStore {
           data.secret1 = authdata["secret1"] as string
           data.accessToken = authdata["accessToken"] as string
           data.refreshToken = authdata["refreshToken"] as string
-
           Object.entries(data).forEach((pair: [string, string]) => {
             if (pair[1] == undefined) {
-              throw new Error(`缺少 ${pair[0]}`)
+              throw new Error(getLocalizedString($r('app.string.base_missing_format'), pair[0]))
             }
           })
           element.external = JSON.stringify(data)
@@ -404,3 +405,8 @@ export class PromptParams<T> {
     this.ctx?.getPromptAction().closeCustomDialog(this.content)
   }
 }
+
+
+
+
+

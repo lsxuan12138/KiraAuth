@@ -1,9 +1,9 @@
-import { bundleManager, common, ConfigurationConstant } from "@kit.AbilityKit";
-import { picker, fileIo as fs } from "@kit.CoreFileKit";
-import { AuthDataStore, DefaultToastDuration } from "./Base";
-import { ShowPrivacyView } from "./PrivacyView";
-import { proxyServer } from "./proxy/Proxy"
-
+﻿import { bundleManager, common, ConfigurationConstant } from "@kit.AbilityKit";
+import { fileIo as fs, picker } from '@kit.CoreFileKit';
+import { AuthDataStore, DefaultToastDuration } from './Base';
+import { ShowPrivacyView } from './PrivacyView';
+import { proxyServer } from './proxy/Proxy';
+import { IconPackManager } from '../components/IconPackManager';
 @Component
 export struct Setting {
   @StorageLink("enableAutoDarkMode") enableAutoDarkMode: boolean = true
@@ -25,7 +25,7 @@ export struct Setting {
       RelativeContainer() {
         Column() {
           Row() {
-            Text("跟随系统深色模式")
+            Text($r('app.string.setting_auto_dark'))
               .width("80%")
               .fontWeight(FontWeight.Bold)
               .textAlign(TextAlign.Start)
@@ -44,14 +44,14 @@ export struct Setting {
           .alignItems(VerticalAlign.Center)
 
           Row() {
-            Text("启用后，系统打开或关闭深色模式时，App 也跟随切换。")
+            Text($r('app.string.setting_auto_dark_desc'))
               .padding({ left: 30, right: 20 })
               .fontSize(12)
           }
           .width("100%")
 
           Row() {
-            Text("启用安全模式")
+            Text($r('app.string.setting_safe_mode'))
               .width("80%")
               .fontWeight(FontWeight.Bold)
               .textAlign(TextAlign.Start)
@@ -64,14 +64,14 @@ export struct Setting {
           .alignItems(VerticalAlign.Center)
 
           Row() {
-            Text("启用后，打开 App 时需要通过生物识别（人脸识别，指纹，密码）解锁，解锁成功后才能查看令牌。\n启用后会在下次打开 App 时生效。")
+            Text($r('app.string.setting_safe_mode_desc'))
               .padding({ left: 30, right: 20 })
               .fontSize(12)
           }
           .width("100%")
 
           Row() {
-            Text("隐藏令牌")
+            Text($r('app.string.setting_hide_token'))
               .width("80%")
               .fontWeight(FontWeight.Bold)
               .textAlign(TextAlign.Start)
@@ -84,15 +84,19 @@ export struct Setting {
           .alignItems(VerticalAlign.Center)
 
           Row() {
-            Text("启用后，在 App 首页的令牌将显示为星号，点击星号显示令牌。\n详情页不受此设置影响，直接显示令牌。")
+            Text($r('app.string.setting_hide_token_desc'))
               .padding({ left: 30, right: 20 })
               .fontSize(12)
           }
           .width("100%")
 
+          IconPackManager()
+            .margin({ top: 12, bottom: 12 })
+            .padding({ left: 20, right: 20 })
+
           if (proxyServer != "") {
             Row() {
-              Text("增强访问")
+              Text($r('app.string.setting_network'))
                 .width("80%")
                 .fontWeight(FontWeight.Bold)
                 .textAlign(TextAlign.Start)
@@ -101,17 +105,11 @@ export struct Setting {
                   if (this.developmentCounter >= 10) {
                     this.developmentCounter = 0
                     this.developmentMode = !this.developmentMode
-                    if (this.developmentMode) {
-                      this.getUIContext().getPromptAction().showToast({
-                        duration: DefaultToastDuration,
-                        message: "已启用开发者模式"
-                      })
-                    } else {
-                      this.getUIContext().getPromptAction().showToast({
-                        duration: DefaultToastDuration,
-                        message: "已关闭开发者模式"
-                      })
-                    }
+                    this.getUIContext().getPromptAction().showToast({
+                      duration: DefaultToastDuration,
+                      message: this.developmentMode ? $r('app.string.setting_network_enabled') :
+                        $r('app.string.setting_network_disabled')
+                    })
                   }
                 })
               Toggle({ type: ToggleType.Switch, isOn: this.enhanceNetwork })
@@ -123,7 +121,7 @@ export struct Setting {
             .alignItems(VerticalAlign.Center)
 
             Row() {
-              Text("启用后，增强通过令牌访问特定服务的稳定性。")
+              Text($r('app.string.setting_network_desc'))
                 .padding({ left: 30, right: 20 })
                 .fontSize(12)
             }
@@ -131,11 +129,12 @@ export struct Setting {
           }
 
           Row() {
-            Text("隐私政策")
+            Text($r('app.string.setting_privacy_policy'))
               .width("75%")
               .fontWeight(FontWeight.Bold)
               .textAlign(TextAlign.Start)
-            Text(this.privacyState == "Agreed" ? "已同意" : "未同意")
+            Text(this.privacyState == "Agreed" ? $r('app.string.setting_privacy_agreed') :
+              $r('app.string.setting_privacy_disagreed'))
               .width("15%")
               .fontWeight(FontWeight.Bold)
               .onClick(() => {
@@ -143,22 +142,17 @@ export struct Setting {
                   this.privacyState = state
                 })
               })
-
           }
           .height(40)
           .alignItems(VerticalAlign.Center)
 
-          Row() {
-            Text("无论是否同意隐私政策，均可使用所有功能。点击选项右侧的【" + (this.privacyState == "Agreed" ? "已同意" :
-              "未同意") + "】，可再次查看隐私政策内容。")
-              .padding({ left: 30, right: 20 })
-              .fontSize(12)
-          }
-          .width("100%")
+          Text($r('app.string.setting_privacy_desc_prefix'))
+            .padding({ left: 30, right: 20 })
+
 
           Row() {
-            Button("导出令牌密钥文件（*.atsf）")
-              .onClick((event: ClickEvent) => {
+            Button($r('app.string.setting_export'))
+              .onClick(() => {
                 let saveOptions = new picker.DocumentSaveOptions()
                 saveOptions.newFileNames = ["authenticator.atsf"]
                 saveOptions.fileSuffixChoices = [".atsf"]
@@ -170,7 +164,7 @@ export struct Setting {
                   if (uris.length != 1) {
                     this.getUIContext().getPromptAction().showToast({
                       duration: DefaultToastDuration,
-                      message: "请选择一个文件保存路径"
+                      message: $r('app.string.setting_export_pick_single')
                     })
                     return
                   }
@@ -185,7 +179,7 @@ export struct Setting {
                   fs.close(file)
                   this.getUIContext().getPromptAction().showToast({
                     duration: DefaultToastDuration,
-                    message: "导出完成"
+                    message: $r('app.string.setting_export_success')
                   })
                   return
                 })
@@ -195,7 +189,7 @@ export struct Setting {
           .alignItems(VerticalAlign.Center)
 
           Row() {
-            Text("令牌密钥文件包含 App 内所有令牌的密钥，文件内容没有加密，请小心保存以免泄露。")
+            Text($r('app.string.setting_export_desc'))
               .padding({ left: 30, right: 20 })
               .fontSize(12)
           }
@@ -203,12 +197,12 @@ export struct Setting {
         }
 
         Column() {
-          Text(`版本：${this.appInfo?.versionName}(${this.appInfo?.versionCode})`)
+          Text($r('app.string.setting_version_format', this.appInfo?.versionName, this.appInfo?.versionCode))
             .margin(5)
             .copyOption(CopyOptions.LocalDevice)
             .fontSize(12)
             .fontWeight(FontWeight.Bold)
-          Text(`用户 QQ 群：931132608`)
+          Text($r('app.string.setting_qq_group_format', '931132608'))
             .margin(5)
             .copyOption(CopyOptions.LocalDevice)
             .fontSize(12)
@@ -222,6 +216,9 @@ export struct Setting {
         .id("version")
       }
     }
-    .title("设置")
+    .title($r('app.string.setting_title'))
   }
 }
+
+
+

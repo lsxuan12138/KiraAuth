@@ -1,9 +1,12 @@
-import { AuthData, AuthDataStore, DefaultToastDuration, PromptParams, SteamAuthData } from "./Base"
-import { SymbolGlyphModifier } from "@kit.ArkUI";
-import { JSON, util } from "@kit.ArkTS";
-import { intl } from "@kit.LocalizationKit";
-import { scanBarcode, scanCore } from "@kit.ScanKit";
-import { SteamClient } from "./Steam";
+﻿import { AuthData, AuthDataStore, DefaultToastDuration, PromptParams, SteamAuthData } from './Base';
+import { SymbolGlyphModifier } from '@kit.ArkUI';
+import { JSON, util } from '@kit.ArkTS';
+import { intl } from '@kit.LocalizationKit';
+import { scanBarcode, scanCore } from '@kit.ScanKit';
+import { SteamClient } from './Steam';
+import { TokenIcon } from '../components/TokenIcon';
+import { getLocalizedString } from '../entryability/EntryAbility';
+
 
 class SteamParams {
   public maFile: string = ""
@@ -18,10 +21,10 @@ class SteamParams {
 function buildSteamInput(params: PromptParams<SteamParams>) {
   Row() {
     Column() {
-      Text("输入 Steam 认证信息")
+      Text($r('app.string.detail_steam_input_title'))
         .fontSize(30)
         .fontWeight(FontWeight.Bold)
-      Text("认证通过后可以使用 Steam 扫码登陆和交易确认功能")
+      Text($r('app.string.detail_steam_input_desc'))
         .fontSize(12)
         .fontWeight(FontWeight.Normal)
         .margin({ bottom: 20 })
@@ -32,10 +35,10 @@ function buildSteamInput(params: PromptParams<SteamParams>) {
           params.data.maFile = value
         })
       Row() {
-        Button('取消').onClick(() => {
+        Button($r('app.string.common_cancel')).onClick(() => {
           params.close()
         })
-        Button('确认').onClick(() => {
+        Button($r('app.string.common_confirm')).onClick(() => {
           try {
             let data = new SteamAuthData()
             let authdata = JSON.parse(params.data.maFile, (key: string, val: Object | undefined | null) => {
@@ -57,10 +60,9 @@ function buildSteamInput(params: PromptParams<SteamParams>) {
             let tokens = authdata["tokens"] as Record<string, string>
             data.accessToken = tokens["access_token"]
             data.refreshToken = tokens["refresh_token"]
-
             Object.entries(data).forEach((pair: [string, string]) => {
               if (pair[1] == undefined) {
-                throw new Error(`缺少 ${pair[0]}`)
+                throw new Error(getLocalizedString($r('app.string.base_missing_format'), pair[0]))
               }
             })
 
@@ -70,11 +72,10 @@ function buildSteamInput(params: PromptParams<SteamParams>) {
             params.close()
             detail.authDataStore.saveAuthItem(detail.item.id)
             params.data.detail?.loadSteamAuthData()
-
           } catch (e) {
             params.data.detail?.getUIContext().getPromptAction().showToast({
               duration: DefaultToastDuration,
-              message: `认证信息格式错误，请确保内容来自 maFile 文件，${e.toString()}`
+              message: $r('app.string.detail_steam_input_error_format', `${e.toString()}`)
             })
             return
           }
@@ -147,7 +148,6 @@ export struct Detail {
       this.steamAuthData.accessToken = authdata["accessToken"] as string
       this.steamAuthData.refreshToken = authdata["refreshToken"] as string
 
-
       let parts = this.steamAuthData.refreshToken.split(".")
       let base64 = new util.Base64Helper()
       let data = base64.decodeSync(parts[1], util.Type.BASIC_URL_SAFE)
@@ -160,7 +160,7 @@ export struct Detail {
     } catch (e) {
       this.getUIContext().getPromptAction().showToast({
         duration: DefaultToastDuration,
-        message: `认证信息格式错误，${e.toString()}, 内容：${this.item.external}`
+        message: $r('app.string.detail_steam_invalid_error_format', `${e.toString()}`, this.item.external)
       })
     }
   }
@@ -187,24 +187,24 @@ export struct Detail {
             if (err) {
               this.getUIContext().getPromptAction().showToast({
                 duration: DefaultToastDuration,
-                message: `Steam 登录失败：${err.message}`
+                message: $r('app.string.detail_steam_login_failed_format', err.message)
               })
               return
             }
             this.getUIContext().getPromptAction().showToast({
               duration: DefaultToastDuration,
-              message: "Steam 登录成功"
+              message: $r('app.string.detail_steam_login_success')
             })
           })
         this.getUIContext().getPromptAction().showToast({
           duration: DefaultToastDuration,
-          message: "开始登录 Steam..."
+          message: $r('app.string.detail_steam_login_start')
         })
       })
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({
         duration: DefaultToastDuration,
-        message: `扫码失败：${error}`
+        message: $r('app.string.common_scan_failed_format', `${error}`)
       })
     }
   }
@@ -220,15 +220,15 @@ export struct Detail {
       if (this.item.external != undefined && this.item.external.length > 0) {
         Row() {
           Column() {
-            Text("----- Steam 认证信息 -----")
-            Text("如遇扫码登录和交易确认出现请求超时或请求失败等问题，请在设置中开启增强访问。")
+            Text($r('app.string.detail_steam_section_title'))
+            Text($r('app.string.detail_steam_section_desc'))
               .padding({ left: 30, right: 30 })
               .fontSize(12)
           }
         }
 
         Row() {
-          Text("Steam 账号")
+          Text($r('app.string.detail_steam_account'))
             .width("30%")
             .textAlign(TextAlign.Start)
             .margin(5)
@@ -240,7 +240,7 @@ export struct Detail {
         .alignItems(VerticalAlign.Center)
 
         Row() {
-          Text("Steam ID")
+          Text($r('app.string.detail_steam_id'))
             .width("30%")
             .textAlign(TextAlign.Start)
           Text(this.steamAuthData.steamID)
@@ -251,7 +251,7 @@ export struct Detail {
         .alignItems(VerticalAlign.Center)
 
         Row() {
-          Text("设备 ID")
+          Text($r('app.string.detail_device_id'))
             .width("30%")
             .textAlign(TextAlign.Start)
           Text(this.steamAuthData.deviceID.substring(this.steamAuthData.deviceID.indexOf(":") + 1))
@@ -262,7 +262,7 @@ export struct Detail {
         .alignItems(VerticalAlign.Center)
 
         Row() {
-          Text("过期时间")
+          Text($r('app.string.detail_expire_time'))
             .width("30%")
             .textAlign(TextAlign.Start)
           Text(this.steamExpirationTime.toLocaleString((new intl.Locale()).toString(), { hour12: false }))
@@ -273,17 +273,17 @@ export struct Detail {
         .alignItems(VerticalAlign.Center)
 
         Row() {
-          Button("重新设置")
+          Button($r('app.string.detail_reset'))
             .onClick(() => this.onSteamButtonPressed())
             .width("40%")
             .margin(5)
-          Button("更新过期时间")
+          Button($r('app.string.detail_update_expire'))
             .onClick(() => this.onSteamRefreshButtonPressed())
             .width("40%")
             .margin(5)
         }
       } else {
-        Button("设置 Steam 认证信息")
+        Button($r('app.string.detail_setup_steam'))
           .onClick(() => this.onSteamButtonPressed())
       }
     }
@@ -293,18 +293,19 @@ export struct Detail {
     NavDestination() {
       Column() {
         Row() {
+          TokenIcon({ issuer: this.item.issuer, iconPath: this.item.tokenIconPath })
           Text(this.safe ? this.item.password : "******")
             .fontSize(40)
             .fontWeight(FontWeight.Bold)
             .textAlign(TextAlign.Center)
             .copyOption(CopyOptions.LocalDevice)
         }
-        .height(40)
+        .height(60)
         .alignItems(VerticalAlign.Center)
         .margin(20)
 
         Row() {
-          Text("别名")
+          Text($r('app.string.detail_alias'))
             .width("30%")
             .textAlign(TextAlign.Start)
           TextInput({ text: this.item.alias })
@@ -323,7 +324,7 @@ export struct Detail {
         .alignItems(VerticalAlign.Center)
 
         Row() {
-          Text("账号")
+          Text($r('app.string.detail_account'))
             .width("30%")
             .textAlign(TextAlign.Start)
           Text(this.item.account)
@@ -334,7 +335,7 @@ export struct Detail {
         .alignItems(VerticalAlign.Center)
 
         Row() {
-          Text("发行商")
+          Text($r('app.string.detail_issuer'))
             .width("30%")
             .textAlign(TextAlign.Start)
           Text(this.item.issuer)
@@ -345,7 +346,7 @@ export struct Detail {
         .alignItems(VerticalAlign.Center)
 
         Row() {
-          Text("位数")
+          Text($r('app.string.detail_digits'))
             .width("30%")
             .textAlign(TextAlign.Start)
           Text(this.item.digits.toString())
@@ -373,3 +374,5 @@ export struct Detail {
     ] : [])
   }
 }
+
+

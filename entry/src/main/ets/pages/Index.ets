@@ -1,16 +1,16 @@
-import { SymbolGlyphModifier } from "@ohos.arkui.modifier"
-import { scanCore, scanBarcode } from '@kit.ScanKit';
+﻿import { SymbolGlyphModifier } from '@ohos.arkui.modifier';
+import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { BusinessError, systemDateTime } from '@kit.BasicServicesKit';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { Setting } from './Setting';
 import { userAuth } from '@kit.UserAuthenticationKit';
 import { Detail } from './Detail';
-import { AuthData, AuthDataStore, DefaultToastDuration, PromptParams, SteamAccountData } from './Base';
+import { AuthData, AuthDataStore, DefaultToastDuration, SteamAccountData } from './Base';
 import { SteamConfirmationList } from './SteamConfirmationList';
 import { SteamConfirmationDetail } from './SteamConfirmationDetail';
 import { Confirmation } from './Steam';
-import { Add, AddSecret, AddSteamSecret, AddUri } from "./Add";
+import { Add, AddSecret, AddSteamSecret, AddUri } from './Add';
 import {
   AddSteamToken,
   SteamConfirmLink,
@@ -18,11 +18,13 @@ import {
   SteamLink,
   SteamLogin,
   SteamMFALogin,
-  SteamTransferAuthenticator,
-  SteamRefreshToken
-} from "./AddSteam";
-import { ShowPrivacyView } from "./PrivacyView";
-import { curves } from "@kit.ArkUI";
+  SteamRefreshToken,
+  SteamTransferAuthenticator
+} from './AddSteam';
+import { ShowPrivacyView } from './PrivacyView';
+import { curves } from '@kit.ArkUI';
+import { TokenIcon } from '../components/TokenIcon';
+import { getLocalizedString } from '../entryability/EntryAbility';
 
 @Entry
 @Component
@@ -55,7 +57,6 @@ struct Index {
         this.privacyState = state
       })
     }
-
   }
 
   aboutToDisappear(): void {
@@ -104,7 +105,7 @@ struct Index {
       };
       // 配置认证界面
       const widgetParam: userAuth.WidgetParam = {
-        title: '请进行身份认证',
+        title: getLocalizedString($r('app.string.index_auth_title')),
       };
       // 获取认证对象
       const userAuthInstance = userAuth.getUserAuthInstance(authParam, widgetParam);
@@ -130,6 +131,13 @@ struct Index {
 
   onPageHide(): void {
     this.safe = false
+  }
+
+  showSafeModeToast() {
+    this.getUIContext().getPromptAction().showToast({
+      duration: DefaultToastDuration,
+      message: $r('app.string.common_safe_mode_unlock_first')
+    })
   }
 
   @Builder
@@ -169,33 +177,6 @@ struct Index {
     }
   }
 
-  @Builder
-  Logo(issuer: string, iconPath: string) {
-    if (iconPath == "") {
-      SymbolGlyph($r("sys.symbol.person"))
-        .fontSize(30)
-        .padding(5)
-        .margin(10)
-        .fontColor([$r("app.color.vendor_icon_color")])
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-    } else {
-      //todo 添加图标包管理
-      //todo 添加图标显示
-    }
-    // if (this.vendors.has(issuer.toLowerCase())) {
-    //   Image($rawfile(this.vendors.get(issuer.toLowerCase())))
-    //     .width(40)
-    //     .padding(5)
-    //     .margin(10)
-    //     .backgroundColor($r("app.color.vendor_background_color"))
-    //     .borderRadius(20)
-    //     .draggable(false)
-    // } else {
-    //
-    // }
-  }
-
   build() {
     Column() {
       Navigation(this.pageStack) {
@@ -204,7 +185,7 @@ struct Index {
             Column() {
               SymbolGlyph($r("sys.symbol.info_shield"))
                 .fontSize(35)
-              Text("还没有添加过令牌密钥\n请点击右上角的加号或扫码按钮添加")
+              Text($r('app.string.index_empty'))
                 .fontWeight(FontWeight.Bold)
                 .padding(20)
                 .textAlign(TextAlign.Center)
@@ -222,7 +203,7 @@ struct Index {
             ForEach(this.items, (item: AuthData, index: number) => {
               ListItem() {
                 Row() {
-                  this.Logo(item.issuer, item.tokenIconPath)
+                  TokenIcon({ issuer: item.issuer, iconPath: item.tokenIconPath })
                   Column() {
                     Text(item.alias)
                       .fontSize(20)
@@ -238,10 +219,7 @@ struct Index {
                     .fontWeight(FontWeight.Bold)
                     .onClick(() => {
                       if (!this.safe) {
-                        this.getUIContext().getPromptAction().showToast({
-                          duration: DefaultToastDuration,
-                          message: "已启用安全模式，请先解锁"
-                        })
+                        this.showSafeModeToast()
                         return
                       }
                       if (!this.hideToken) {
@@ -255,10 +233,7 @@ struct Index {
                 .opacity(item.id == this.dragItem?.id ? 0 : 1)
                 .onClick(() => {
                   if (!this.safe) {
-                    this.getUIContext().getPromptAction().showToast({
-                      duration: DefaultToastDuration,
-                      message: "已启用安全模式，请先解锁"
-                    })
+                    this.showSafeModeToast()
                     return
                   }
                   this.pageStack.pushPathByName("Detail", item)
@@ -329,10 +304,7 @@ struct Index {
           symbolIcon: new SymbolGlyphModifier($r('sys.symbol.gearshape')),
           action: () => {
             if (!this.safe) {
-              this.getUIContext().getPromptAction().showToast({
-                duration: DefaultToastDuration,
-                message: "已启用安全模式，请先解锁"
-              })
+              this.showSafeModeToast()
               return
             }
             this.pageStack.pushPathByName("Setting", undefined)
@@ -363,12 +335,9 @@ struct Index {
     .type(ButtonType.Normal)
     .width(60)
     .height("100%")
-    .onClick((event) => {
+    .onClick(() => {
       if (!this.safe) {
-        this.getUIContext().getPromptAction().showToast({
-          duration: DefaultToastDuration,
-          message: "已启用安全模式，请先解锁"
-        })
+        this.showSafeModeToast()
         return
       }
       this.authDataStore.removeAuthItem(id)
@@ -378,10 +347,7 @@ struct Index {
 
   onAddButtonPressed() {
     if (!this.safe) {
-      this.getUIContext().getPromptAction().showToast({
-        duration: DefaultToastDuration,
-        message: "已启用安全模式，请先解锁"
-      })
+      this.showSafeModeToast()
       return
     }
     this.pageStack.pushPathByName("Add", undefined)
@@ -389,10 +355,7 @@ struct Index {
 
   onScanButtonPressed() {
     if (!this.safe) {
-      this.getUIContext().getPromptAction().showToast({
-        duration: DefaultToastDuration,
-        message: "已启用安全模式，请先解锁"
-      })
+      this.showSafeModeToast()
       return
     }
     let options: scanBarcode.ScanOptions =
@@ -407,19 +370,19 @@ struct Index {
           this.authDataStore.addAuthItem(result.originalValue)
           this.getUIContext().getPromptAction().showToast({
             duration: DefaultToastDuration,
-            message: "成功添加令牌"
+            message: $r('app.string.index_add_success')
           })
         } catch (error) {
           this.getUIContext().getPromptAction().showToast({
             duration: DefaultToastDuration,
-            message: `扫码失败：${error}`
+            message: $r('app.string.common_scan_failed_format', `${error}`)
           })
         }
       })
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({
         duration: DefaultToastDuration,
-        message: `扫码失败：${error}`
+        message: $r('app.string.common_scan_failed_format', `${error}`)
       })
     }
   }
@@ -439,21 +402,25 @@ struct Index {
     if (steamTokenCount <= 0) {
       this.getUIContext().getPromptAction().showToast({
         duration: DefaultToastDuration,
-        message: "没有 Steam 令牌，无法扫码登陆 Steam，请先添加 Steam 令牌"
+        message: $r('app.string.index_no_steam_token')
       })
       return
     }
     if (steamAuthDataCount <= 0) {
       this.getUIContext().getPromptAction().showToast({
         duration: DefaultToastDuration,
-        message: "Steam 令牌没有设置认证信息，无法扫码登陆 Steam，请在令牌详情页设置"
+        message: $r('app.string.index_no_steam_auth')
       })
       return
     }
     this.getUIContext().getPromptAction().showToast({
       duration: DefaultToastDuration,
-      message: "请在 Steam 令牌详情页扫码登陆"
+      message: $r('app.string.index_go_to_steam_detail')
     })
     return
   }
 }
+
+
+
+

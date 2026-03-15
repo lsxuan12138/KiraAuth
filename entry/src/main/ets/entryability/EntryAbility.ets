@@ -1,15 +1,26 @@
-import { AbilityConstant, bundleManager, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
+﻿import { AbilityConstant, bundleManager, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { distributedKVStore } from '@kit.ArkData';
-
+import resourceManager from '@ohos.resourceManager';
 
 export let kvManager: distributedKVStore.KVManager;
+
+export let appResourceManager: resourceManager.ResourceManager;
+
+export function getLocalizedString(resource: Resource, ...args: Array<string | number>): string {
+  try {
+    return appResourceManager.getStringSync(resource.id, ...args)
+  } catch (_) {
+    return ""
+  }
+}
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
     let context = this.context
+    appResourceManager = context.resourceManager
     try {
       let bundleName =
         bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION).name
@@ -43,6 +54,8 @@ export default class EntryAbility extends UIAbility {
       PersistentStorage.persistProp("enhanceNetwork", false)
       PersistentStorage.persistProp("developmentMode", false)
       PersistentStorage.persistProp("privacyState", "Unknown")
+      PersistentStorage.persistProp("selectedIconPackKey", "default")
+      PersistentStorage.persistProp("iconPackRevision", 0)
       if (AppStorage.get("enableAutoDarkMode")) {
         this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
       } else {
@@ -66,3 +79,5 @@ export default class EntryAbility extends UIAbility {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onBackground');
   }
 }
+
+
