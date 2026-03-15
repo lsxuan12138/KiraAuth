@@ -129,9 +129,9 @@ export struct Detail {
       let authdata = JSON.parse(this.item.external) as Record<string, Object>
       this.steamAuthData = new SteamAuthData()
 
-      if (authdata["sharedSecret"] == undefined){
+      if (authdata["sharedSecret"] == undefined) {
         this.steamAuthData.sharedSecret = authdata["shardSecret"] as string
-      }else{
+      } else {
         this.steamAuthData.sharedSecret = authdata["sharedSecret"] as string
       }
 
@@ -146,8 +146,8 @@ export struct Detail {
       this.steamAuthData.secret1 = authdata["secret1"] as string
       this.steamAuthData.accessToken = authdata["accessToken"] as string
       this.steamAuthData.refreshToken = authdata["refreshToken"] as string
-      
-      
+
+
       let parts = this.steamAuthData.refreshToken.split(".")
       let base64 = new util.Base64Helper()
       let data = base64.decodeSync(parts[1], util.Type.BASIC_URL_SAFE)

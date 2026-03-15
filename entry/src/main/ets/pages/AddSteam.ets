@@ -468,6 +468,7 @@ export struct SteamConfirmLink {
                   digits: 5,
                   password: token,
                   external: "",
+                  tokenIconPath: ""
                 }
 
                 let helper = new util.Base64Helper()
@@ -615,6 +616,7 @@ export struct SteamConfirmTransferAuthenticator {
                   digits: 5,
                   password: "",
                   external: "",
+                  tokenIconPath: ""
                 }
 
                 let helper = new util.Base64Helper()

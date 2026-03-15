@@ -19,6 +19,7 @@ export class AuthData {
   digits: number = 6
   password: string = ""
   external: string = ""
+  tokenIconPath: string = ""
 }
 
 export class SteamAuthData {
@@ -67,6 +68,9 @@ export class AuthDataStore {
         for (let i = 0; i < data.length; i++) {
           let element = data[i];
           let authdata = JSON.parse(element.value.value as string) as AuthData
+          if (authdata.tokenIconPath == undefined) {
+            authdata.tokenIconPath = "";
+          }
           authdata.password = this.generatePassword(authdata)
           this.items.push(authdata)
           if (authdata.id >= this.next) {
@@ -229,6 +233,7 @@ export class AuthDataStore {
         digits: parameter.digits == googleapi.MigrationPayload.DigitCount.DIGIT_COUNT_EIGHT ? 8 : 6,
         password: "",
         external: "",
+        tokenIconPath: ""
       }
       authdata.password = this.generatePassword(authdata)
       this.next++
@@ -271,6 +276,7 @@ export class AuthDataStore {
       digits: digits == "8" ? 8 : digits == "7" ? 7 : 6,
       password: "",
       external: "",
+      tokenIconPath: ""
     }
     if (issuer == "Steam") {
       authdata.digits = 5
@@ -293,6 +299,9 @@ export class AuthDataStore {
     for (let index = 0; index < result.length; index++) {
       const element = result[index];
       Object.entries(element).forEach((pair: [string, string]) => {
+        if (pair[0] == 'password' || pair[0] == 'tokenIconPath') {
+          return;
+        }
         if (pair[1] == undefined) {
           throw new Error(`第 ${index} 个令牌密钥缺少 ${pair[0]}`)
         }
@@ -300,10 +309,10 @@ export class AuthDataStore {
     }
     for (let index = 0; index < result.length; index++) {
       const element = result[index];
-      if(element.issuer.toLowerCase()=='steam'){
+      if (element.issuer.toLowerCase() == 'steam') {
         let authdata = JSON.parse(element.external) as Record<string, Object>
         // 兼容前面版本导出的备份文件
-        if (authdata["sharedSecret"] == undefined){
+        if (authdata["sharedSecret"] == undefined) {
           let data = new SteamAuthData()
           data.sharedSecret = authdata["shardSecret"] as string
 
@@ -328,6 +337,7 @@ export class AuthDataStore {
         }
       }
       element.id = this.next++
+
       if (this.kvStore) {
         let authString = JSON.stringify(element)
         this.kvStore.put(`/data/auth/${element.id}`, authString)

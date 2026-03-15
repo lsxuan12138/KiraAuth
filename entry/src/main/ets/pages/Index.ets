@@ -169,38 +169,9 @@ struct Index {
     }
   }
 
-  private vendors: Map<string, string>= new Map([
-    ["google", "Google.png"],
-    ["microsoft", "Microsoft.png"],
-    ["github", "Github.png"],
-    ["gitlab", "Gitlab.png"],
-    ["steam", "Steam.png"],
-    ["huawei", "Huawei.png"],
-    ["aliyun", "Aliyun.png"],
-    ["namecheap", "Namecheap.png"],
-    ["neteasemail", "NeteaseMail.png"],
-    ["nintendo", "Nintendo.png"],
-    ["nintendo account", "Nintendo.png"],
-    ["epic games", "Epic Games.png"],
-    ["cloudflare", "Cloudflare.png"],
-    ["twitter", "Twitter.png"],
-    ["nvidia", "Nvidia.png"],
-    ["ubisoft", "Ubisoft.png"],
-    ["uplay", "Ubisoft.png"],
-    ["jetbrains", "Jetbrains.png"],
-  ]);
-
   @Builder
-  Logo(issuer: string) {
-    if (this.vendors.has(issuer.toLowerCase())) {
-      Image($rawfile(this.vendors.get(issuer.toLowerCase())))
-        .width(40)
-        .padding(5)
-        .margin(10)
-        .backgroundColor($r("app.color.vendor_background_color"))
-        .borderRadius(20)
-        .draggable(false)
-    } else {
+  Logo(issuer: string, iconPath: string) {
+    if (iconPath == "") {
       SymbolGlyph($r("sys.symbol.person"))
         .fontSize(30)
         .padding(5)
@@ -208,7 +179,21 @@ struct Index {
         .fontColor([$r("app.color.vendor_icon_color")])
         .backgroundColor($r("app.color.vendor_background_color"))
         .borderRadius(20)
+    } else {
+      //todo 添加图标包管理
+      //todo 添加图标显示
     }
+    // if (this.vendors.has(issuer.toLowerCase())) {
+    //   Image($rawfile(this.vendors.get(issuer.toLowerCase())))
+    //     .width(40)
+    //     .padding(5)
+    //     .margin(10)
+    //     .backgroundColor($r("app.color.vendor_background_color"))
+    //     .borderRadius(20)
+    //     .draggable(false)
+    // } else {
+    //
+    // }
   }
 
   build() {
@@ -237,7 +222,7 @@ struct Index {
             ForEach(this.items, (item: AuthData, index: number) => {
               ListItem() {
                 Row() {
-                  this.Logo(item.issuer)
+                  this.Logo(item.issuer, item.tokenIconPath)
                   Column() {
                     Text(item.alias)
                       .fontSize(20)

@@ -175,7 +175,12 @@ export struct Setting {
                     return
                   }
                   let file = fs.openSync(uris[0], fs.OpenMode.READ_WRITE)
-                  let data = JSON.stringify(this.authDataStore.items)
+                  let data = JSON.stringify(this.authDataStore.items, (key: string, value: string | number) => {
+                    if (key == "password" || key == "tokenIconPath") {
+                      return undefined;
+                    }
+                    return value;
+                  })
                   fs.writeSync(file.fd, data)
                   fs.close(file)
                   this.getUIContext().getPromptAction().showToast({
