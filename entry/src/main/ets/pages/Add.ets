@@ -485,4 +485,3 @@ export struct AddSteamSecret {
     .title($r('app.string.add_steam_secret_title'))
   }
 }
-

@@ -1,9 +1,10 @@
-﻿import { bundleManager, common, ConfigurationConstant } from "@kit.AbilityKit";
+﻿import { bundleManager, common, ConfigurationConstant } from '@kit.AbilityKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
-import { AuthDataStore, DefaultToastDuration } from './Base';
+import { AuthDataStore, DefaultToastDuration, parseSteamExternalAuthData } from './Base';
 import { ShowPrivacyView } from './PrivacyView';
 import { proxyServer } from './proxy/Proxy';
 import { IconPackManager } from '../components/IconPackManager';
+
 @Component
 export struct Setting {
   @StorageLink("enableAutoDarkMode") enableAutoDarkMode: boolean = true
@@ -18,6 +19,11 @@ export struct Setting {
 
   aboutToAppear(): void {
     this.appInfo = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION)
+  }
+
+  getPrivacyState(): Resource {
+    return this.privacyState == "Agreed" ? $r('app.string.setting_privacy_agreed') :
+      $r('app.string.setting_privacy_disagreed')
   }
 
   build() {
@@ -133,8 +139,7 @@ export struct Setting {
               .width("75%")
               .fontWeight(FontWeight.Bold)
               .textAlign(TextAlign.Start)
-            Text(this.privacyState == "Agreed" ? $r('app.string.setting_privacy_agreed') :
-              $r('app.string.setting_privacy_disagreed'))
+            Text(this.getPrivacyState())
               .width("15%")
               .fontWeight(FontWeight.Bold)
               .onClick(() => {
@@ -146,7 +151,7 @@ export struct Setting {
           .height(40)
           .alignItems(VerticalAlign.Center)
 
-          Text($r('app.string.setting_privacy_desc_prefix'))
+          Text($r('app.string.setting_privacy_desc_prefix', this.getPrivacyState()))
             .padding({ left: 30, right: 20 })
 
 
@@ -172,6 +177,11 @@ export struct Setting {
                   let data = JSON.stringify(this.authDataStore.items, (key: string, value: string | number) => {
                     if (key == "password" || key == "tokenIconPath") {
                       return undefined;
+                    }
+                    // 使前面版本external的导出改变（如果打开过Detail页面，这里的external已经改变了）
+                    if (key == "external" && value != "") {
+                      let authdata = JSON.parse(value as string) as Record<string, Object>
+                      return JSON.stringify(parseSteamExternalAuthData(authdata))
                     }
                     return value;
                   })
@@ -219,6 +229,3 @@ export struct Setting {
     .title($r('app.string.setting_title'))
   }
 }
-
-
-

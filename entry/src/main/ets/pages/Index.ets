@@ -420,7 +420,3 @@ struct Index {
     return
   }
 }
-
-
-
-

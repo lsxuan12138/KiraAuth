@@ -406,7 +406,7 @@
     },
     {
       "name": "setting_privacy_desc_prefix",
-      "value": "All features are available regardless of whether you agree to the privacy policy. Tap the status on the right to review it again."
+      "value": "All features are available regardless of whether you agree to the privacy policy. Tap the [%s] on the right to review it again."
     },
     {
       "name": "setting_export",
@@ -481,8 +481,8 @@
       "value": "Confirmation ID"
     },
     {
-      "name": "confirm_detail_nonce",
-      "value": "Nonce"
+      "name": "confirm_disposable_number",
+      "value": "Disposable number"
     },
     {
       "name": "confirm_detail_icon_url",

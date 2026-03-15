@@ -1,4 +1,4 @@
-﻿import { AuthData, AuthDataStore, DefaultToastDuration, PromptParams, SteamAuthData } from './Base';
+import { AuthData, AuthDataStore, DefaultToastDuration, parseSteamExternalAuthData, PromptParams, SteamAuthData } from './Base';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
 import { JSON, util } from '@kit.ArkTS';
 import { intl } from '@kit.LocalizationKit';
@@ -120,7 +120,7 @@ export struct Detail {
   }
 
   loadSteamAuthData(): void {
-    if (this.item.issuer != "Steam" || this.item.external == "") {
+    if (this.item.issuer.toLowerCase() != "steam" || this.item.external == "") {
       return
     }
     if (this.item.external == this.lastExternalInfo) {
@@ -128,25 +128,7 @@ export struct Detail {
     }
     try {
       let authdata = JSON.parse(this.item.external) as Record<string, Object>
-      this.steamAuthData = new SteamAuthData()
-
-      if (authdata["sharedSecret"] == undefined) {
-        this.steamAuthData.sharedSecret = authdata["shardSecret"] as string
-      } else {
-        this.steamAuthData.sharedSecret = authdata["sharedSecret"] as string
-      }
-
-      this.steamAuthData.accountName = authdata["accountName"] as string
-      this.steamAuthData.steamID = authdata["steamID"] as string
-      this.steamAuthData.serialNumber = authdata["serialNumber"] as string
-      this.steamAuthData.revocationCode = authdata["revocationCode"] as string
-      this.steamAuthData.tokenGID = authdata["tokenGID"] as string
-      this.steamAuthData.identitySecret = authdata["identitySecret"] as string
-      this.steamAuthData.uri = authdata["uri"] as string
-      this.steamAuthData.deviceID = authdata["deviceID"] as string
-      this.steamAuthData.secret1 = authdata["secret1"] as string
-      this.steamAuthData.accessToken = authdata["accessToken"] as string
-      this.steamAuthData.refreshToken = authdata["refreshToken"] as string
+      this.steamAuthData = parseSteamExternalAuthData(authdata)
 
       let parts = this.steamAuthData.refreshToken.split(".")
       let base64 = new util.Base64Helper()
@@ -216,7 +198,7 @@ export struct Detail {
 
   @Builder
   buildExternalView() {
-    if (this.item.issuer == "Steam") {
+    if (this.item.issuer.toLowerCase() == "steam") {
       if (this.item.external != undefined && this.item.external.length > 0) {
         Row() {
           Column() {
@@ -374,5 +356,3 @@ export struct Detail {
     ] : [])
   }
 }
-
-

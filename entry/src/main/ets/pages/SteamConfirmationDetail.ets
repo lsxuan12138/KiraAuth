@@ -90,7 +90,7 @@ export struct SteamConfirmationDetail {
           .alignItems(VerticalAlign.Center)
 
           Row() {
-            Text($r('app.string.confirm_detail_nonce'))
+            Text($r('app.string.confirm_disposable_number'))
               .width("30%")
               .textAlign(TextAlign.Start)
             Text(this.confirmation.nonce)

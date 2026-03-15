@@ -6,7 +6,7 @@ import resourceManager from '@ohos.resourceManager';
 
 export let kvManager: distributedKVStore.KVManager;
 
-export let appResourceManager: resourceManager.ResourceManager;
+let appResourceManager: resourceManager.ResourceManager;
 
 export function getLocalizedString(resource: Resource, ...args: Array<string | number>): string {
   try {

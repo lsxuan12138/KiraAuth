@@ -150,7 +150,7 @@
     },
     {
       "name": "add_secret_digits",
-      "value": "位数"
+      "value": "令牌位数"
     },
     {
       "name": "add_secret_invalid_secret",
@@ -278,7 +278,7 @@
     },
     {
       "name": "detail_issuer",
-      "value": "提供方"
+      "value": "发行商"
     },
     {
       "name": "detail_digits",
@@ -406,7 +406,7 @@
     },
     {
       "name": "setting_privacy_desc_prefix",
-      "value": "无论是否同意隐私政策，均可使用所有功能。点击右侧状态可再次查看。"
+      "value": "无论是否同意隐私政策，均可使用所有功能。点击选项右侧的【%s】，可再次查看隐私政策内容。"
     },
     {
       "name": "setting_export",
@@ -481,8 +481,8 @@
       "value": "确认 ID"
     },
     {
-      "name": "confirm_detail_nonce",
-      "value": "Nonce"
+      "name": "confirm_disposable_number",
+      "value": "一次性编号"
     },
     {
       "name": "confirm_detail_icon_url",
@@ -538,7 +538,7 @@
     },
     {
       "name": "confirm_list_allow_failed_format",
-      "value": "允许请求失败：%s"
+      "value": "确认请求失败：%s"
     },
     {
       "name": "confirm_list_deny_failed_format",

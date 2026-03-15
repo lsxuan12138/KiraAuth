@@ -49,6 +49,31 @@ export class SteamAccountData {
   account?: steam2faapi.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response
 }
 
+export function isLegacySteamExternal(authdata: Record<string, Object>): boolean {
+  return authdata["sharedSecret"] == undefined && authdata["shardSecret"] != undefined
+}
+
+export function parseSteamExternalAuthData(authdata: Record<string, Object>): SteamAuthData {
+  let steamAuthData = new SteamAuthData()
+  steamAuthData.sharedSecret = authdata["sharedSecret"] as string
+  if (steamAuthData.sharedSecret == undefined) {
+    // 兼容旧版本导出的字段名：shardSecret
+    steamAuthData.sharedSecret = authdata["shardSecret"] as string
+  }
+  steamAuthData.accountName = authdata["accountName"] as string
+  steamAuthData.steamID = authdata["steamID"] as string
+  steamAuthData.serialNumber = authdata["serialNumber"] as string
+  steamAuthData.revocationCode = authdata["revocationCode"] as string
+  steamAuthData.tokenGID = authdata["tokenGID"] as string
+  steamAuthData.identitySecret = authdata["identitySecret"] as string
+  steamAuthData.uri = authdata["uri"] as string
+  steamAuthData.deviceID = authdata["deviceID"] as string
+  steamAuthData.secret1 = authdata["secret1"] as string
+  steamAuthData.accessToken = authdata["accessToken"] as string
+  steamAuthData.refreshToken = authdata["refreshToken"] as string
+  return steamAuthData
+}
+
 export class AuthDataStore {
   public kvStore?: distributedKVStore.DeviceKVStore
   public items: AuthData[] = []
@@ -313,28 +338,15 @@ export class AuthDataStore {
       const element = result[index];
       if (element.issuer.toLowerCase() == 'steam') {
         let authdata = JSON.parse(element.external) as Record<string, Object>
-        // 兼容前面版本导出的备份文件
-        if (authdata["sharedSecret"] == undefined) {
-          let data = new SteamAuthData()
-          data.sharedSecret = authdata["shardSecret"] as string
-
-          data.accountName = authdata["accountName"] as string
-          data.steamID = authdata["steamID"] as string
-          data.serialNumber = authdata["serialNumber"] as string
-          data.revocationCode = authdata["revocationCode"] as string
-          data.tokenGID = authdata["tokenGID"] as string
-          data.identitySecret = authdata["identitySecret"] as string
-          data.uri = authdata["uri"] as string
-          data.deviceID = authdata["deviceID"] as string
-          data.secret1 = authdata["secret1"] as string
-          data.accessToken = authdata["accessToken"] as string
-          data.refreshToken = authdata["refreshToken"] as string
-          Object.entries(data).forEach((pair: [string, string]) => {
+        // 兼容旧版备份中的 shardSecret 字段并统一结构
+        if (isLegacySteamExternal(authdata)) {
+          let steamAuthData = parseSteamExternalAuthData(authdata)
+          Object.entries(steamAuthData).forEach((pair: [string, string]) => {
             if (pair[1] == undefined) {
               throw new Error(getLocalizedString($r('app.string.base_missing_format'), pair[0]))
             }
           })
-          element.external = JSON.stringify(data)
+          element.external = JSON.stringify(steamAuthData)
         }
       }
       element.id = this.next++
@@ -405,8 +417,3 @@ export class PromptParams<T> {
     this.ctx?.getPromptAction().closeCustomDialog(this.content)
   }
 }
-
-
-
-
-
