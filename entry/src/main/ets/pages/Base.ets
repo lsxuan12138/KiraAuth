@@ -347,6 +347,9 @@ export class AuthDataStore {
     for (let index = 0; index < result.length; index++) {
       const element = result[index];
       if (element.issuer.toLowerCase() == 'steam') {
+        if (element.external == '') {
+          continue;
+        }
         let authdata = JSON.parse(element.external) as Record<string, Object>
         // 兼容旧版备份中的 shardSecret 字段并统一结构
         if (isLegacySteamExternal(authdata)) {
