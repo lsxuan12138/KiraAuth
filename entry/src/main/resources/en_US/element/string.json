@@ -90,7 +90,7 @@
     },
     {
       "name": "add_totp_uri_desc",
-      "value": "A TOTP URI starts with otpauth://totp/, for example: otpauth://totp/Example:alice@example.com?secret=ABCDEFGHIJ234567\u0026issuer=Example"
+      "value": "A TOTP URI starts with otpauth://totp/, for example: otpauth://totp/Example:alic e@example.com?secret=ABCDEFGHIJ234567&issuer=Example"
     },
     {
       "name": "add_restore_title",
@@ -703,6 +703,22 @@
     {
       "name": "invalid_steam_qr_code",
       "value": "Invalid Steam login QR code."
+    },
+    {
+      "name": "icon_picker_auto",
+      "value": "Auto"
+    },
+    {
+      "name": "icon_picker_recommended",
+      "value": "Recommended"
+    },
+    {
+      "name": "icon_picker_title",
+      "value": "Choose icon"
+    },
+    {
+      "name": "icon_picker_mode",
+      "value": "Display mode"
     }
   ]
 }

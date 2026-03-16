@@ -94,6 +94,7 @@ export class AuthDataStore {
         for (let i = 0; i < data.length; i++) {
           let element = data[i];
           let authdata = JSON.parse(element.value.value as string) as AuthData
+          // 兼容之前的版本
           if (authdata.tokenIconPath == undefined) {
             authdata.tokenIconPath = "";
           }
@@ -238,6 +239,15 @@ export class AuthDataStore {
     let authString = JSON.stringify(item)
     this.kvStore?.put(`/data/auth/${item.id}`, authString)
     this.onChanged(this.items)
+  }
+
+  updateTokenIconPath(id: number, tokenIconPath: string) {
+    let index = this.findAuthItem(id)
+    if (index < 0) {
+      return
+    }
+    this.items[index].tokenIconPath = tokenIconPath
+    this.saveAuthItem(id)
   }
 
   addGoogleAuthItem(data: string) {
@@ -405,8 +415,8 @@ export class PromptParams<T> {
 
   constructor(ctx: UIContext, builder: WrappedBuilder<[PromptParams<T>]>, data: T) {
     this.ctx = ctx
-    this.content = new ComponentContent(this.ctx, builder, this);
     this.data = data
+    this.content = new ComponentContent(this.ctx, builder, this);
   }
 
   open() {

@@ -1,32 +1,29 @@
-import { common } from '@kit.AbilityKit';
+﻿import { common } from '@kit.AbilityKit';
 import { AegisIconPack, IconPackRegistry } from '../utils/IconPackUtils';
 import { DefaultToastDuration } from '../pages/Base';
+import { parseInstalledIconPacks, refreshInstalledIconPacks } from '../entryability/EntryAbility';
 
 @Component
 export struct IconPackManager {
   @StorageLink('selectedIconPackKey') selectedIconPackKey: string = IconPackRegistry.getDefaultPackKey();
-  @StorageLink('iconPackRevision') iconPackRevision: number = 0;
-  @State installedPacks: AegisIconPack[] = [];
+  @StorageLink('installedIconPacksJson') installedIconPacksJson: string = '[]';
   @State expanded: boolean = false;
 
   aboutToAppear(): void {
     this.reloadPacks();
   }
 
-  private reloadPacks(): void {
-    const context = getContext(this) as common.UIAbilityContext;
-    IconPackRegistry.loadInstalledPacks(context).then((packs) => {
-      this.installedPacks = packs;
-      if (this.selectedIconPackKey !== IconPackRegistry.getDefaultPackKey()
-        && !packs.some((pack) => pack.getKey() === this.selectedIconPackKey && !pack.invalid)) {
-        this.selectedIconPackKey = IconPackRegistry.getDefaultPackKey();
-        this.bumpRevision();
-      }
-    });
+  private getInstalledPacks(): AegisIconPack[] {
+    return parseInstalledIconPacks(this.installedIconPacksJson);
   }
 
-  private bumpRevision(): void {
-    this.iconPackRevision = this.iconPackRevision + 1;
+  private async reloadPacks(): Promise<void> {
+    const context = getContext(this) as common.UIAbilityContext;
+    const packs = await refreshInstalledIconPacks(context);
+    if (this.selectedIconPackKey !== IconPackRegistry.getDefaultPackKey()
+      && !packs.some((pack) => pack.getKey() === this.selectedIconPackKey && !pack.invalid)) {
+      this.selectedIconPackKey = IconPackRegistry.getDefaultPackKey();
+    }
   }
 
   private showToast(message: ResourceStr | string): void {
@@ -37,7 +34,7 @@ export struct IconPackManager {
   }
 
   private getInstalledCount(): number {
-    return this.installedPacks.filter((pack) => !pack.invalid).length;
+    return this.getInstalledPacks().filter((pack) => !pack.invalid).length;
   }
 
   private getPackName(pack: AegisIconPack): ResourceStr | string {
@@ -64,8 +61,7 @@ export struct IconPackManager {
       for (const path of paths) {
         await IconPackRegistry.importFromZip(context, path);
       }
-      this.reloadPacks();
-      this.bumpRevision();
+      await this.reloadPacks();
       this.showToast($r('app.string.icon_pack_import_success'));
     } catch (error) {
       this.showToast($r('app.string.icon_pack_import_failed_format',
@@ -79,8 +75,7 @@ export struct IconPackManager {
       if (this.selectedIconPackKey === pack.getKey()) {
         this.selectedIconPackKey = IconPackRegistry.getDefaultPackKey();
       }
-      this.reloadPacks();
-      this.bumpRevision();
+      await this.reloadPacks();
       this.showToast($r('app.string.icon_pack_remove_success'));
     } catch (error) {
       this.showToast($r('app.string.icon_pack_remove_failed_format',
@@ -146,7 +141,6 @@ export struct IconPackManager {
         Text($r('app.string.icon_pack_desc'))
           .padding({ left: 10 })
           .fontSize(12)
-          // .fontColor('#666666')
       }
       .width('100%')
 
@@ -160,11 +154,10 @@ export struct IconPackManager {
             true,
             () => {
               this.selectedIconPackKey = IconPackRegistry.getDefaultPackKey();
-              this.bumpRevision();
             }
           )
 
-          ForEach(this.installedPacks, (pack: AegisIconPack) => {
+          ForEach(this.getInstalledPacks(), (pack: AegisIconPack) => {
             this.packRow(
               pack.getKey(),
               this.getPackName(pack),
@@ -173,7 +166,6 @@ export struct IconPackManager {
               !pack.invalid,
               () => {
                 this.selectedIconPackKey = pack.getKey();
-                this.bumpRevision();
               },
               () => this.onRemovePressed(pack)
             )

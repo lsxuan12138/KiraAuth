@@ -1,35 +1,23 @@
 ﻿import { fileIo as fs } from '@kit.CoreFileKit';
-import { common } from '@kit.AbilityKit';
 import { AegisIconPack, IconPackRegistry } from '../utils/IconPackUtils';
+import { parseInstalledIconPacks } from '../entryability/EntryAbility';
 
 @Component
 export struct TokenIcon {
   @Prop issuer: string = '';
   @Prop iconPath: string = '';
   @StorageLink('selectedIconPackKey') selectedIconPackKey: string = IconPackRegistry.getDefaultPackKey();
-  @StorageLink('iconPackRevision') iconPackRevision: number = 0;
-  @State installedPacks: AegisIconPack[] = [];
+  @StorageLink('installedIconPacksJson') installedIconPacksJson: string = '[]';
 
-  aboutToAppear(): void {
-    this.reloadIconPacks();
-  }
-
-  aboutToReuse(): void {
-    this.reloadIconPacks();
-  }
-
-  private reloadIconPacks(): void {
-    const context = getContext(this) as common.UIAbilityContext;
-    IconPackRegistry.loadInstalledPacks(context).then((packs) => {
-      this.installedPacks = packs;
-    });
+  private getInstalledPacks(): AegisIconPack[] {
+    return parseInstalledIconPacks(this.installedIconPacksJson);
   }
 
   private resolveIconPath(): string {
     if (this.iconPath && this.isValidPath(this.iconPath)) {
       return this.iconPath;
     }
-    return IconPackRegistry.getIconPathByIssuer(this.issuer, this.selectedIconPackKey, this.installedPacks);
+    return IconPackRegistry.getIconPathByIssuer(this.issuer, this.selectedIconPackKey, this.getInstalledPacks());
   }
 
   private isValidPath(path: string): boolean {
@@ -79,6 +67,7 @@ export struct TokenIcon {
           .width(40)
           .height(40)
           .objectFit(ImageFit.Contain)
+          .draggable(false)
       } else {
         Text(this.issuer.length > 0 ? this.issuer.charAt(0).toUpperCase() : '?')
           .fontSize(20)
@@ -95,4 +84,3 @@ export struct TokenIcon {
     .borderRadius(20)
   }
 }
-

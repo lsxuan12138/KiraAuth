@@ -1,12 +1,25 @@
-import { fileIo as fs, picker } from '@kit.CoreFileKit';
+﻿import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { BusinessError, zlib } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
 
 export interface AegisIconDefinition {
   filename: string;
+  name?: string;
   category?: string;
   issuer?: string[];
+}
+
+enum IconMatchType {
+  NORMAL = 0,
+  INVERSE = 1
+}
+
+export interface IconPackSection {
+  key: string;
+  title: string;
+  count: number;
+  getPathAt: (index: number) => string;
 }
 
 export class AegisIconPack {
@@ -22,17 +35,55 @@ export class AegisIconPack {
     this.iconMap.clear();
     this.icons.forEach((icon) => {
       (icon.issuer ?? []).forEach((issuer) => {
-        this.iconMap.set(issuer.toLowerCase(), icon.filename);
+        this.iconMap.set(IconPackRegistry.normalizeIssuer(issuer), icon.filename);
       });
     });
   }
 
+  getSuggestedIconPaths(issuer: string): string[] {
+    if (!issuer) {
+      return [];
+    }
+
+    const suggested: string[] = [];
+    this.icons.forEach((icon) => {
+      const matchType = IconPackRegistry.getMatchType(issuer, icon.issuer ?? []);
+      if (matchType === undefined) {
+        return;
+      }
+
+      const path = `file://${this.onDevicePath}/${icon.filename}`;
+      if (matchType === IconMatchType.NORMAL) {
+        suggested.unshift(path);
+      } else {
+        suggested.push(path);
+      }
+    });
+    return suggested;
+  }
+
   getIconPathByIssuer(issuer: string): string {
+    const suggested = this.getSuggestedIconPaths(issuer);
+    if (suggested.length > 0) {
+      return suggested[0];
+    }
+
     const filename = this.iconMap.get(IconPackRegistry.normalizeIssuer(issuer));
     if (!filename) {
       return '';
     }
     return `file://${this.onDevicePath}/${filename}`;
+  }
+
+  getIconPathAt(index: number): string {
+    if (index < 0 || index >= this.icons.length) {
+      return '';
+    }
+    return `file://${this.onDevicePath}/${this.icons[index].filename}`;
+  }
+
+  getAllIconPaths(): string[] {
+    return this.icons.map((icon) => `file://${this.onDevicePath}/${icon.filename}`);
   }
 
   getKey(): string {
@@ -42,36 +93,9 @@ export class AegisIconPack {
 
 export class IconPackRegistry {
   private static readonly DEFAULT_PACK_KEY = 'default';
-  private static readonly DEFAULT_ISSUERS: Set<string> = new Set([
-    '1and1', '1password', '23andme', 'adafruit', 'adguard', 'adobe', 'airbnb', 'airbrake', 'airtable', 'allegropl',
-    'alwaysdata', 'amazon', 'amazonwebservices', 'angellist', 'animebytes', 'anonaddy', 'apache', 'apple', 'appveyor',
-    'arenanet', 'atlantic_net', 'atlassian', 'avm', 'backblaze', 'battlenet', 'betterment', 'binance', 'bitbucket',
-    'bitcoin', 'bitdefender', 'bitfinex', 'bitmex', 'bitpanda', 'bitstamp', 'bittrex', 'bitwala', 'bitwarden',
-    'blockchain_info', 'bugcrowd', 'cexio', 'church_tools', 'cisco', 'cloudflare', 'cloud_download', 'cobranded',
-    'codegiant', 'coinbase', 'coinjar', 'computerbase', 'connectwise_manage', 'cozycloud', 'crowdin', 'dashlane',
-    'debian', 'degiro', 'denic', 'deutsche_bahn', 'diaspora', 'digidentity', 'digital_ocean', 'discord', 'discourse',
-    'disroot', 'docker', 'docusign', 'dreamhost', 'dropbox', 'drupal', 'electronic_arts', 'email', 'epic_games', 'etsy',
-    'eveonline', 'evernote', 'facebook', 'faceit', 'fanatical', 'fastmail', 'figma', 'fingerprint', 'finnair',
-    'firefox', 'flight_takeoff', 'floatplane', 'friendica', 'fritz', 'gamepad', 'gandi', 'git', 'gitea', 'github',
-    'gitlab', 'gmx', 'godaddy', 'gogs', 'google', 'govuk', 'grav', 'greenhost', 'hackerone', 'heroku', 'hetzner',
-    'hitbtc', 'hmrc', 'home_assistant', 'hover', 'humblebundle', 'hurricane_electric', 'ibm', 'iconomi', 'ifttt', 'ing',
-    'instagram', 'inwx', 'itchio', 'jagex', 'jetbrains', 'joomla', 'keeper', 'kickstarter', 'kraken', 'kucoin',
-    'lastpass', 'librenms', 'lichess', 'linkedin', 'linode', 'liqui', 'livelyme', 'lobsters', 'localbitcoins',
-    'localmonero', 'login_gov', 'logmein', 'mailbox', 'mailchimp', 'mailcow', 'mailgun', 'mailru', 'mapbox', 'mastodon',
-    'matomo', 'mega', 'mercadolibre', 'microsoft', 'microsoft_teams', 'migadu', 'miles_and_more', 'mint', 'miraheze',
-    'mixer', 'mongodb', 'mvpsnet', 'namecheap', 'namecom', 'nas', 'netcup', 'nextcloud', 'nintendo', 'no_starch_press',
-    'npm', 'oculus', 'office', 'okta', 'online', 'openvz', 'opnsense', 'orcid', 'origin', 'ovh', 'packet',
-    'parsecgaming', 'passwordstate', 'patreon', 'paypal', 'paysafecard', 'paywithprivacy', 'pcloud', 'phabricator',
-    'phpmyadmin', 'pluralsight', 'plurk', 'posteo', 'pretix', 'prey', 'private_internet_access', 'protonmail',
-    'proxmox', 'pushover', 'pypi', 'python_anywhere', 'rackspace', 'reddit', 'revolt', 'ripe_ncc', 'ripio', 'robinhood',
-    'rocketbeanstv', 'rockstar', 'rss', 'sap', 'scaleway', 'school', 'sciebo', 'sentry', 'sevdesk', 'skrill', 'slack',
-    'snapchat', 'sophos', 'sourceforge', 'squarespace', 'standardnotes', 'starcitizen', 'steam', 'stripe', 'sync',
-    'synology', 'teahub', 'teamviewer', 'terminal', 'tencent_cloud_services', 'todoalojamiento', 'transip', 'trello',
-    'tumblr', 'turbotax', 'tutanota', 'tuwien_ac_at', 'twilio', 'twitch', 'twitter', 'uber', 'ubisoft', 'ubnt',
-    'ubuntu_one', 'unity', 'uphold', 'usaa', 'vagrant_cloud', 'vexxhost', 'vk', 'vultr', 'wallabag', 'wallet',
-    'wargaming', 'wasabi', 'weclapp', 'wikimedia', 'wordpress', 'workplace', 'xero', 'xerox', 'xing', 'yandex_money',
-    'zapier', 'zendesk', 'zoho', 'zoom', 'feishu', 'nexus_mods'
-  ]);
+  private static readonly DEFAULT_ISSUERS: string[] = ['aliyun', 'cloudflare', 'epic_games', 'github', 'gitlab',
+    'google', 'huawei', 'jetbrains', 'microsoft', 'namecheap', 'neteasemail', 'nintendo', 'nvidia', 'steam',
+    'twitter', 'ubisoft'];
 
   static normalizeIssuer(issuer: string): string {
     return issuer.trim().toLowerCase().replaceAll(' ', '_');
@@ -94,11 +118,11 @@ export class IconPackRegistry {
   }
 
   static getDefaultIconPathByIssuer(issuer: string): string {
-    const normalized = IconPackRegistry.normalizeIssuer(issuer);
-    if (!IconPackRegistry.DEFAULT_ISSUERS.has(normalized)) {
-      return '';
+    const suggested = IconPackRegistry.getSuggestedDefaultIconPaths(issuer);
+    if (suggested.length > 0) {
+      return suggested[0];
     }
-    return `rawfile://icons/token_image_${normalized}.svg`;
+    return '';
   }
 
   static getIconPathByIssuer(issuer: string, selectedPackKey: string, installedPacks: AegisIconPack[]): string {
@@ -111,7 +135,107 @@ export class IconPackRegistry {
       return IconPackRegistry.getDefaultIconPathByIssuer(issuer);
     }
 
-    return pack.getIconPathByIssuer(issuer);
+    const path = pack.getIconPathByIssuer(issuer);
+    if (path) {
+      return path;
+    }
+    return IconPackRegistry.getDefaultIconPathByIssuer(issuer);
+  }
+
+  static getDefaultIconPaths(): string[] {
+    return IconPackRegistry.DEFAULT_ISSUERS.map((issuer) => `rawfile://icons/${issuer}.png`);
+  }
+
+  static getSuggestedDefaultIconPaths(issuer: string): string[] {
+    if (!issuer) {
+      return [];
+    }
+
+    const suggested: string[] = [];
+    IconPackRegistry.DEFAULT_ISSUERS.forEach((candidate) => {
+      const matchType = IconPackRegistry.getMatchType(issuer, [candidate, candidate.replaceAll('_', ' ')]);
+      if (matchType === undefined) {
+        return;
+      }
+
+      const path = `rawfile://icons/${candidate}.png`;
+      if (matchType === IconMatchType.NORMAL) {
+        suggested.unshift(path);
+      } else {
+        suggested.push(path);
+      }
+    });
+    return suggested;
+  }
+
+  static getSuggestedIconPaths(issuer: string, installedPacks: AegisIconPack[]): string[] {
+    const suggested: string[] = [];
+    const seen = new Set<string>();
+    const pushPath = (path: string) => {
+      if (!path || seen.has(path)) {
+        return;
+      }
+      seen.add(path);
+      suggested.push(path);
+    };
+
+    IconPackRegistry.getSuggestedDefaultIconPaths(issuer).forEach(pushPath);
+    installedPacks.filter((pack) => !pack.invalid)
+      .forEach((pack) => pack.getSuggestedIconPaths(issuer).forEach(pushPath));
+    return suggested;
+  }
+
+  static getIconSections(installedPacks: AegisIconPack[]): IconPackSection[] {
+    const sections: IconPackSection[] = [
+      {
+        key: IconPackRegistry.DEFAULT_PACK_KEY,
+        title: 'builtin',
+        count: IconPackRegistry.DEFAULT_ISSUERS.length,
+        getPathAt: (index: number): string => {
+          if (index < 0 || index >= IconPackRegistry.DEFAULT_ISSUERS.length) {
+            return '';
+          }
+          return `rawfile://icons/${IconPackRegistry.DEFAULT_ISSUERS[index]}.png`;
+        }
+      }
+    ];
+
+    installedPacks.filter((pack) => !pack.invalid).forEach((pack) => {
+      sections.push({
+        key: pack.getKey(),
+        title: pack.name,
+        count: pack.icons.length,
+        getPathAt: (index: number): string => pack.getIconPathAt(index)
+      });
+    });
+
+    return sections;
+  }
+
+  static getMatchType(issuer: string, candidates: string[]): IconMatchType | undefined {
+    const normalizedIssuer = issuer.trim().toLowerCase();
+    if (!normalizedIssuer) {
+      return undefined;
+    }
+
+    let inverseMatch = false;
+    for (const candidate of candidates) {
+      const normalizedCandidate = candidate.trim().toLowerCase();
+      if (!normalizedCandidate) {
+        continue;
+      }
+      if (normalizedCandidate.includes(normalizedIssuer)) {
+        return IconMatchType.NORMAL;
+      }
+      if (normalizedIssuer.includes(normalizedCandidate)) {
+        inverseMatch = true;
+      }
+    }
+
+    if (inverseMatch) {
+      return IconMatchType.INVERSE;
+    }
+    return undefined;
   }
 
   static async loadInstalledPacks(context: common.UIAbilityContext): Promise<AegisIconPack[]> {
@@ -256,5 +380,4 @@ export class IconPackRegistry {
     return `${error}`;
   }
 }
-
 

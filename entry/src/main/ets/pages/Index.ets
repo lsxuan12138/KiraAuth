@@ -6,7 +6,7 @@ import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { Setting } from './Setting';
 import { userAuth } from '@kit.UserAuthenticationKit';
 import { Detail } from './Detail';
-import { AuthData, AuthDataStore, DefaultToastDuration, SteamAccountData } from './Base';
+import { AuthData, AuthDataStore, DefaultToastDuration, PromptParams, SteamAccountData } from './Base';
 import { SteamConfirmationList } from './SteamConfirmationList';
 import { SteamConfirmationDetail } from './SteamConfirmationDetail';
 import { Confirmation } from './Steam';
@@ -24,6 +24,7 @@ import {
 import { ShowPrivacyView } from './PrivacyView';
 import { curves } from '@kit.ArkUI';
 import { TokenIcon } from '../components/TokenIcon';
+import { buildTokenIconPicker, TokenIconPickerData } from '../components/TokenIconPicker';
 import { getLocalizedString } from '../entryability/EntryAbility';
 
 @Entry
@@ -140,6 +141,21 @@ struct Index {
     })
   }
 
+  openTokenIconPicker(item: AuthData) {
+    const data = new TokenIconPickerData()
+    data.issuer = item.issuer
+    data.currentIconPath = item.tokenIconPath
+    let params: PromptParams<TokenIconPickerData>
+    data.onConfirm = (path: string): void => {
+      this.authDataStore.updateTokenIconPath(item.id, path)
+    }
+    data.onClose = (): void => {
+      params.close()
+    }
+    params = new PromptParams(this.getUIContext(), wrapBuilder(buildTokenIconPicker), data)
+    params.open()
+  }
+
   @Builder
   PagesMap(name: string, param: object) {
     if (name == 'Add') {
@@ -203,7 +219,20 @@ struct Index {
             ForEach(this.items, (item: AuthData, index: number) => {
               ListItem() {
                 Row() {
-                  TokenIcon({ issuer: item.issuer, iconPath: item.tokenIconPath })
+                  Stack() {
+                    TokenIcon({ issuer: item.issuer, iconPath: item.tokenIconPath })
+                  }
+                  .gesture(
+                    LongPressGesture()
+                      .onAction(() => {
+                        if (!this.safe) {
+                          this.showSafeModeToast()
+                          return
+                        }
+                        this.openTokenIconPicker(item)
+                      })
+                  )
+
                   Column() {
                     Text(item.alias)
                       .fontSize(20)
@@ -283,7 +312,8 @@ struct Index {
                   this.dragItem = undefined
                 })
               })
-            }, (item: AuthData) => item.id.toString() + "-" + item.alias + "-" + item.account + "-" + item.password)
+            }, (item: AuthData) => item.id.toString() + "-" + item.alias + "-" + item.account + "-" + item.password +
+              "-" + item.tokenIconPath)
           }
         }
       }

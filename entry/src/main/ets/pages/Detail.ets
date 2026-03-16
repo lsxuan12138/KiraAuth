@@ -1,10 +1,18 @@
-import { AuthData, AuthDataStore, DefaultToastDuration, parseSteamExternalAuthData, PromptParams, SteamAuthData } from './Base';
+﻿import {
+  AuthData,
+  AuthDataStore,
+  DefaultToastDuration,
+  parseSteamExternalAuthData,
+  PromptParams,
+  SteamAuthData
+} from './Base';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
 import { JSON, util } from '@kit.ArkTS';
 import { intl } from '@kit.LocalizationKit';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { SteamClient } from './Steam';
 import { TokenIcon } from '../components/TokenIcon';
+import { buildTokenIconPicker, TokenIconPickerData } from '../components/TokenIconPicker';
 import { getLocalizedString } from '../entryability/EntryAbility';
 
 
@@ -196,6 +204,22 @@ export struct Detail {
     this.pageStack.pushPathByName("SteamConfirmationList", params)
   }
 
+  openTokenIconPicker() {
+    const data = new TokenIconPickerData()
+    data.issuer = this.item.issuer
+    data.currentIconPath = this.item.tokenIconPath
+    let params: PromptParams<TokenIconPickerData>
+    data.onConfirm = (path: string): void => {
+      this.item.tokenIconPath = path
+      this.authDataStore.updateTokenIconPath(this.item.id, path)
+    }
+    data.onClose = (): void => {
+      params.close()
+    }
+    params = new PromptParams(this.getUIContext(), wrapBuilder(buildTokenIconPicker), data)
+    params.open()
+  }
+
   @Builder
   buildExternalView() {
     if (this.item.issuer.toLowerCase() == "steam") {
@@ -275,7 +299,16 @@ export struct Detail {
     NavDestination() {
       Column() {
         Row() {
-          TokenIcon({ issuer: this.item.issuer, iconPath: this.item.tokenIconPath })
+          Stack() {
+            TokenIcon({ issuer: this.item.issuer, iconPath: this.item.tokenIconPath })
+          }
+          .gesture(
+            LongPressGesture()
+              .onAction(() => {
+                this.openTokenIconPicker()
+              })
+          )
+
           Text(this.safe ? this.item.password : "******")
             .fontSize(40)
             .fontWeight(FontWeight.Bold)

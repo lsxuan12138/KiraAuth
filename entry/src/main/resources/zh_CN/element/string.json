@@ -703,6 +703,22 @@
     {
       "name": "invalid_steam_qr_code",
       "value": "无效的 Steam 登陆二维码"
+    },
+    {
+      "name": "icon_picker_auto",
+      "value": "自动"
+    },
+    {
+      "name": "icon_picker_recommended",
+      "value": "推荐"
+    },
+    {
+      "name": "icon_picker_title",
+      "value": "选择图标"
+    },
+    {
+      "name": "icon_picker_mode",
+      "value": "显示方式"
     }
   ]
 }
