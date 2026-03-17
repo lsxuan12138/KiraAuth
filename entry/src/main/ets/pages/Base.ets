@@ -1,4 +1,4 @@
-﻿import { systemDateTime } from '@kit.BasicServicesKit';
+import { systemDateTime } from '@kit.BasicServicesKit';
 import { ComponentContent } from '@kit.ArkUI';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { buffer, JSON, uri, util } from '@kit.ArkTS';
@@ -66,6 +66,7 @@ export class AuthDataStore {
       }
       this.kvStore = store
       this.kvStore.getEntries("/data/auth/", (_entryErr, data) => {
+        //用来去重
         const seen = new Set<string>()
         for (let i = 0; i < data.length; i++) {
           let authdata = JSON.parse(data[i].value.value as string) as AuthData
@@ -92,6 +93,7 @@ export class AuthDataStore {
     this.onChanged([...this.items])
   }
 
+  //重用，不再到处使用字符串，防止写错
   private buildStorageKey(uuid: string): string {
     return `/data/auth/${uuid}`
   }
@@ -124,6 +126,9 @@ export class AuthDataStore {
       `${combined.substring(16, 20)}-${combined.substring(20, 32)}`
   }
 
+  /**
+   * 持久化
+   */
   private persistAuthItem(item: AuthData): void {
     let authString = JSON.stringify(item)
     this.kvStore?.put(this.buildStorageKey(item.uuid), authString)
@@ -133,6 +138,11 @@ export class AuthDataStore {
     return this.findAuthItem(uuid) >= 0
   }
 
+  /**
+   * 添加到store并持久化，过程中计算password和order
+   * @param item
+   * @returns
+   */
   private appendAuthItem(item: AuthData): boolean {
     if (this.containsUuid(item.uuid)) {
       return false

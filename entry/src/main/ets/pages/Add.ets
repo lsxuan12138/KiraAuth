@@ -1,4 +1,4 @@
-﻿import { AuthDataStore, DefaultToastDuration } from './Base';
+import { AuthDataStore, DefaultToastDuration } from './Base';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 

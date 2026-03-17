@@ -1,4 +1,4 @@
-﻿import { AuthData, AuthDataStore, DefaultToastDuration, SteamAccountData, SteamAuthData } from './Base';
+import { AuthData, AuthDataStore, DefaultToastDuration, SteamAccountData, SteamAuthData } from './Base';
 import { SteamClient } from './Steam';
 import * as steamapi from './steamapi/custom';
 import { uri, util } from '@kit.ArkTS';

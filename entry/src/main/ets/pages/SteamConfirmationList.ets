@@ -1,4 +1,4 @@
-﻿import { DefaultToastDuration, SteamAuthData } from './Base';
+import { DefaultToastDuration, SteamAuthData } from './Base';
 import { Confirmation, SteamClient } from './Steam';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
 import { intl } from '@kit.LocalizationKit';

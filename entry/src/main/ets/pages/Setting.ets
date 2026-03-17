@@ -1,4 +1,4 @@
-﻿import { bundleManager, common, ConfigurationConstant } from '@kit.AbilityKit';
+import { bundleManager, common, ConfigurationConstant } from '@kit.AbilityKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { AuthDataStore, DefaultToastDuration } from './Base';
 import { ShowPrivacyView } from './PrivacyView';

@@ -1,4 +1,4 @@
-﻿import { common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { AegisIconPack, IconPackRegistry } from '../utils/IconPackUtils';
 import { DefaultToastDuration } from '../pages/Base';
 import { parseInstalledIconPacks, refreshInstalledIconPacks } from '../entryability/EntryAbility';

@@ -1,4 +1,4 @@
-﻿import { fileIo as fs } from '@kit.CoreFileKit';
+import { fileIo as fs } from '@kit.CoreFileKit';
 import { AegisIconPack, IconPackRegistry } from '../utils/IconPackUtils';
 import { parseInstalledIconPacks } from '../entryability/EntryAbility';
 

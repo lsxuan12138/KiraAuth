@@ -1,4 +1,4 @@
-﻿import { SymbolGlyphModifier } from '@ohos.arkui.modifier';
+import { SymbolGlyphModifier } from '@ohos.arkui.modifier';
 import { scanBarcode, scanCore } from '@kit.ScanKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { BusinessError, systemDateTime } from '@kit.BasicServicesKit';

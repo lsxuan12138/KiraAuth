@@ -1,4 +1,4 @@
-﻿import { common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { PromptParams } from '../pages/Base';
 import { TokenIcon } from './TokenIcon';
 import { IconPackRegistry, IconPackSection } from '../utils/IconPackUtils';

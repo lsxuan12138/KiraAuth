@@ -1,4 +1,4 @@
-﻿import { fileIo as fs, picker } from '@kit.CoreFileKit';
+import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { BusinessError, zlib } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
