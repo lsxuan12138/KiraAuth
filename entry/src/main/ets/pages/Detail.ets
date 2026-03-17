@@ -14,6 +14,7 @@ import { SteamClient } from './Steam';
 import { TokenIcon } from '../components/TokenIcon';
 import { buildTokenIconPicker, TokenIconPickerData } from '../components/TokenIconPicker';
 import { getLocalizedString } from '../entryability/EntryAbility';
+import { systemDateTime } from '@kit.BasicServicesKit';
 
 
 class SteamParams {
@@ -78,7 +79,7 @@ function buildSteamInput(params: PromptParams<SteamParams>) {
             detail.item.external = JSON.stringify(data)
             detail.item.account = data.accountName
             params.close()
-            detail.authDataStore.saveAuthItem(detail.item.id)
+            detail.authDataStore.saveAuthItem(detail.item.uuid)
             params.data.detail?.loadSteamAuthData()
           } catch (e) {
             params.data.detail?.getUIContext().getPromptAction().showToast({
@@ -115,10 +116,12 @@ export struct Detail {
   aboutToAppear(): void {
     this.loadSteamAuthData()
     this.timer = setInterval(() => {
-      let temp = this.item
-      this.item = new AuthData()
-      this.item = temp
-    }, 500)
+      this.progress = systemDateTime.getTime(false) / 1000 % 30
+      const index = this.authDataStore.findAuthItem(this.item.uuid)
+      if (index >= 0) {
+        this.item = this.authDataStore.items[index]
+      }
+    }, 1000)
   }
 
   aboutToDisappear(): void {
@@ -211,7 +214,8 @@ export struct Detail {
     let params: PromptParams<TokenIconPickerData>
     data.onConfirm = (path: string): void => {
       this.item.tokenIconPath = path
-      this.authDataStore.updateTokenIconPath(this.item.id, path)
+      this.authDataStore.updateTokenIconPath(this.item.uuid, path)
+      // this.item = this.authDataStore.items[this.authDataStore.findAuthItem(this.item.uuid)]
     }
     data.onClose = (): void => {
       params.close()
@@ -331,7 +335,7 @@ export struct Detail {
             .onChange((str) => {
               if (str != this.item.alias) {
                 this.item.alias = str;
-                this.authDataStore.saveAuthItem(this.item.id)
+                this.authDataStore.saveAuthItem(this.item.uuid)
               }
             })
         }

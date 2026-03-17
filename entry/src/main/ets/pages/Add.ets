@@ -1,4 +1,4 @@
-﻿import { AuthDataStore, DefaultToastDuration } from "./Base";
+﻿import { AuthDataStore, DefaultToastDuration } from './Base';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 
@@ -131,10 +131,12 @@ export struct Add {
                   fs.readSync(file.fd, buffer)
                   fs.close(file)
                   let data = util.TextDecoder.create("utf-8").decodeToString(new Uint8Array(buffer))
-                  this.authDataStore.recoverAuthItem(data)
+                  let GeneratedDestructArray_1 = this.authDataStore.recoverAuthItem(data)
+                  let hasExist = GeneratedDestructArray_1[0];
+                  let total = GeneratedDestructArray_1[1];
                   this.getUIContext().getPromptAction().showToast({
                     duration: DefaultToastDuration,
-                    message: $r('app.string.add_restore_success')
+                    message: $r('app.string.add_restore_success', total, hasExist)
                   })
                 } catch (e) {
                   this.getUIContext().getPromptAction().showToast({

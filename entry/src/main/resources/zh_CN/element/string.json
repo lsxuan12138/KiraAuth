@@ -106,7 +106,7 @@
     },
     {
       "name": "add_restore_success",
-      "value": "恢复完成。"
+      "value": "恢复完成。共%d条，重复%d条。"
     },
     {
       "name": "add_restore_error_format",

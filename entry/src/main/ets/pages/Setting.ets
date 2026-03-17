@@ -175,7 +175,8 @@ export struct Setting {
                   }
                   let file = fs.openSync(uris[0], fs.OpenMode.READ_WRITE)
                   let data = JSON.stringify(this.authDataStore.items, (key: string, value: string | number) => {
-                    if (key == "password" || key == "tokenIconPath") {
+                    if (key == "password" || key == "tokenIconPath"
+                      || key == "uuid"||key=="order"||key=="id") {
                       return undefined;
                     }
                     // 使前面版本external的导出改变（如果打开过Detail页面，这里的external已经改变了）

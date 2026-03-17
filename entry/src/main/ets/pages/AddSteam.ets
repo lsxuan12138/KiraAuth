@@ -459,7 +459,8 @@ export struct SteamConfirmLink {
                 this.accountData.finalizeAuthenticator = resp
                 let authURI = new uri.URI(authenticator.uri)
                 let authData: AuthData = {
-                  id: 0,
+                  uuid: "",
+                  order: 0,
                   alias: "Steam",
                   issuer: "Steam",
                   account: tokens.accountName,
@@ -607,7 +608,8 @@ export struct SteamConfirmTransferAuthenticator {
                 let replacementToken = account!.replacementToken!
                 let authURI = new uri.URI(replacementToken.uri!)
                 let authData: AuthData = {
-                  id: 0,
+                  uuid: "",
+                  order: 0,
                   alias: "Steam",
                   issuer: "Steam",
                   account: tokens.accountName,
@@ -776,7 +778,7 @@ export struct SteamRefreshToken {
                     this.steamAuthData.refreshToken = tokens!.refreshToken
                     this.steamAuthData.accessToken = tokens!.accessToken
                     this.authData.external = JSON.stringify(this.steamAuthData)
-                    this.authDataStore.saveAuthItem(this.authData.id)
+                    this.authDataStore.saveAuthItem(this.authData.uuid)
                     this.getUIContext().getPromptAction().showToast({
                       duration: DefaultToastDuration,
                       message: $r('app.string.steam_refresh_success')

@@ -33,7 +33,7 @@ struct Index {
   @State items: AuthData[] = [];
   dragIndex: number = -1;
   @State dragItem?: AuthData = undefined;
-  @State showTokens: Record<number, boolean> = [];
+  @State showTokens: Record<string, boolean> = {};
   @State progress: number = 0;
   @Provide("pageStack") pageStack: NavPathStack = new NavPathStack();
   @Provide("authDataStore") authDataStore: AuthDataStore = new AuthDataStore((items) => {
@@ -147,7 +147,7 @@ struct Index {
     data.currentIconPath = item.tokenIconPath
     let params: PromptParams<TokenIconPickerData>
     data.onConfirm = (path: string): void => {
-      this.authDataStore.updateTokenIconPath(item.id, path)
+      this.authDataStore.updateTokenIconPath(item.uuid, path)
     }
     data.onClose = (): void => {
       params.close()
@@ -243,7 +243,7 @@ struct Index {
                   .alignItems(HorizontalAlign.Start)
                   .width("55%")
 
-                  Text((this.safe && (!this.hideToken || this.showTokens[item.id])) ? item.password : "******")
+                  Text((this.safe && (!this.hideToken || this.showTokens[item.uuid])) ? item.password : "******")
                     .fontSize(20)
                     .fontWeight(FontWeight.Bold)
                     .onClick(() => {
@@ -255,11 +255,11 @@ struct Index {
                         this.pageStack.pushPathByName("Detail", item)
                         return
                       }
-                      this.showTokens[item.id] = !!!this.showTokens[item.id]
+                      this.showTokens[item.uuid] = !!!this.showTokens[item.uuid]
                     })
                 }
                 .width("100%")
-                .opacity(item.id == this.dragItem?.id ? 0 : 1)
+                .opacity(item.uuid == this.dragItem?.uuid ? 0 : 1)
                 .onClick(() => {
                   if (!this.safe) {
                     this.showSafeModeToast()
@@ -268,11 +268,11 @@ struct Index {
                   this.pageStack.pushPathByName("Detail", item)
                 })
               }
-              .swipeAction({ end: this.deleteButton(item.id) })
+              .swipeAction({ end: this.deleteButton(item.uuid) })
               .borderColor($r("app.color.item_separator_color"))
               .borderWidth({ bottom: 1 })
               .onDragStart((event?: DragEvent, extraParams?: string) => {
-                hilog.debug(0, "testa", `drag start: ${item.id}`)
+                hilog.debug(0, "testa", `drag start: ${item.uuid}`)
                 this.dragIndex = index
                 this.dragItem = item
               })
@@ -280,12 +280,12 @@ struct Index {
                 if (!this.dragItem) {
                   return
                 }
-                if (item.id == this.dragItem?.id) {
+                if (item.uuid == this.dragItem?.uuid) {
                   return
                 }
-                hilog.debug(0, "testa", `drag enter: ${item.id}`)
-                let currentIndex = this.items.findIndex((element) => element.id == this.dragItem!.id)
-                let targetIndex = this.items.findIndex((element) => element.id == item.id)
+                hilog.debug(0, "testa", `drag enter: ${item.uuid}`)
+                let currentIndex = this.items.findIndex((element) => element.uuid == this.dragItem!.uuid)
+                let targetIndex = this.items.findIndex((element) => element.uuid == item.uuid)
                 this.getUIContext()?.animateTo({
                   curve: curves.interpolatingSpring(0, 1, 400, 38)
                 }, () => {
@@ -294,7 +294,7 @@ struct Index {
                 })
               })
               .onDrop((dragEvent: DragEvent) => {
-                hilog.debug(0, "testa", `drop: ${item.id}`)
+                hilog.debug(0, "testa", `drop: ${item.uuid}`)
                 this.dragItem = undefined
                 this.authDataStore.replaceAuthItems(this.items)
               })
@@ -302,8 +302,8 @@ struct Index {
                 if (!this.dragItem) {
                   return
                 }
-                hilog.debug(0, "testa", `drag cancel: ${item.id}`)
-                let currentIndex = this.items.findIndex((element) => element.id == this.dragItem!.id)
+                hilog.debug(0, "testa", `drag cancel: ${item.uuid}`)
+                let currentIndex = this.items.findIndex((element) => element.uuid == this.dragItem!.uuid)
                 this.getUIContext()?.animateTo({
                   curve: curves.interpolatingSpring(0, 1, 400, 38)
                 }, () => {
@@ -312,7 +312,7 @@ struct Index {
                   this.dragItem = undefined
                 })
               })
-            }, (item: AuthData) => item.id.toString() + "-" + item.alias + "-" + item.account + "-" + item.password +
+            }, (item: AuthData) => item.uuid.toString() + "-" + item.alias + "-" + item.account + "-" + item.password +
               "-" + item.tokenIconPath)
           }
         }
@@ -355,7 +355,7 @@ struct Index {
   }
 
   @Builder
-  deleteButton(id: number) {
+  deleteButton(uuid: string) {
     Button() {
       SymbolGlyph($r("sys.symbol.trash"))
         .fontSize(35)
@@ -370,7 +370,7 @@ struct Index {
         this.showSafeModeToast()
         return
       }
-      this.authDataStore.removeAuthItem(id)
+      this.authDataStore.removeAuthItem(uuid)
       this.items = this.authDataStore.items
     })
   }

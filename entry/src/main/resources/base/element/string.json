@@ -106,7 +106,7 @@
     },
     {
       "name": "add_restore_success",
-      "value": "Restore completed."
+      "value": "Restore completed. Total %d, Repeat %d."
     },
     {
       "name": "add_restore_error_format",
