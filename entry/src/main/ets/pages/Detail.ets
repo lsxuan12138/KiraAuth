@@ -111,15 +111,25 @@ export struct Detail {
   @Consume("safe") safe: boolean;
   @Consume("pageStack") pageStack: NavPathStack;
   private timer?: number;
+  private lastPasswordTimeStep: number = -1;
   private lastExternalInfo: string = "";
 
   aboutToAppear(): void {
     this.loadSteamAuthData()
+    const now = systemDateTime.getTime(false) / 1000
+    this.progress = now % 30
+    this.lastPasswordTimeStep = Math.floor(now / 30)
     this.timer = setInterval(() => {
-      this.progress = systemDateTime.getTime(false) / 1000 % 30
-      const index = this.authDataStore.findAuthItem(this.item.uuid)
-      if (index >= 0) {
-        this.item = this.authDataStore.items[index]
+      const current = systemDateTime.getTime(false) / 1000
+      this.progress = current % 30
+      const currentTimeStep = Math.floor(current / 30)
+      if (currentTimeStep != this.lastPasswordTimeStep) {
+        this.lastPasswordTimeStep = currentTimeStep
+        this.authDataStore.refreshAllPassword()
+        const index = this.authDataStore.findAuthItem(this.item.uuid)
+        if (index >= 0) {
+          this.item = this.authDataStore.items[index]
+        }
       }
     }, 1000)
   }
@@ -215,7 +225,6 @@ export struct Detail {
     data.onConfirm = (path: string): void => {
       this.item.tokenIconPath = path
       this.authDataStore.updateTokenIconPath(this.item.uuid, path)
-      // this.item = this.authDataStore.items[this.authDataStore.findAuthItem(this.item.uuid)]
     }
     data.onClose = (): void => {
       params.close()
@@ -302,6 +311,10 @@ export struct Detail {
   build() {
     NavDestination() {
       Column() {
+        Progress({ value: this.progress, total: 29, type: ProgressType.Linear })
+          .width("100%")
+          .height(5)
+
         Row() {
           Stack() {
             TokenIcon({ issuer: this.item.issuer, iconPath: this.item.tokenIconPath })

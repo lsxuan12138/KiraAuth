@@ -44,13 +44,21 @@ struct Index {
   @StorageProp("hideToken") hideToken: boolean = false
   @StorageLink("privacyState") privacyState: string = "Unknown"
   private timer?: number;
+  private lastPasswordTimeStep: number = -1;
 
   aboutToAppear(): void {
     this.items = this.authDataStore.items
-    this.progress = systemDateTime.getTime(false) / 1000 % 30
+    const now = systemDateTime.getTime(false) / 1000
+    this.progress = now % 30
+    this.lastPasswordTimeStep = Math.floor(now / 30)
     this.timer = setInterval(() => {
-      this.progress = systemDateTime.getTime(false) / 1000 % 30
-      this.authDataStore.refreshAllPassword()
+      const current = systemDateTime.getTime(false) / 1000
+      this.progress = current % 30
+      const currentTimeStep = Math.floor(current / 30)
+      if (currentTimeStep != this.lastPasswordTimeStep) {
+        this.lastPasswordTimeStep = currentTimeStep
+        this.authDataStore.refreshAllPassword()
+      }
     }, 1000)
 
     if (this.privacyState == "Unknown") {
