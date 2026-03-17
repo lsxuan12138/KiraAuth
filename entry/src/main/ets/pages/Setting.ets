@@ -1,6 +1,6 @@
 ﻿import { bundleManager, common, ConfigurationConstant } from '@kit.AbilityKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
-import { AuthDataStore, DefaultToastDuration, parseSteamExternalAuthData } from './Base';
+import { AuthDataStore, DefaultToastDuration } from './Base';
 import { ShowPrivacyView } from './PrivacyView';
 import { proxyServer } from './proxy/Proxy';
 import { IconPackManager } from '../components/IconPackManager';
@@ -178,11 +178,6 @@ export struct Setting {
                     if (key == "password" || key == "tokenIconPath"
                       || key == "uuid"||key=="order"||key=="id") {
                       return undefined;
-                    }
-                    // 使前面版本external的导出改变（如果打开过Detail页面，这里的external已经改变了）
-                    if (key == "external" && value != "") {
-                      let authdata = JSON.parse(value as string) as Record<string, Object>
-                      return JSON.stringify(parseSteamExternalAuthData(authdata))
                     }
                     return value;
                   })

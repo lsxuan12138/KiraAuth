@@ -1,8 +1,7 @@
-﻿import {
+import {
   AuthData,
   AuthDataStore,
   DefaultToastDuration,
-  parseSteamExternalAuthData,
   PromptParams,
   SteamAuthData
 } from './Base';
@@ -148,9 +147,7 @@ export struct Detail {
       return
     }
     try {
-      let authdata = JSON.parse(this.item.external) as Record<string, Object>
-      this.steamAuthData = parseSteamExternalAuthData(authdata)
-
+      this.steamAuthData = JSON.parse(this.item.external) as SteamAuthData
       let parts = this.steamAuthData.refreshToken.split(".")
       let base64 = new util.Base64Helper()
       let data = base64.decodeSync(parts[1], util.Type.BASIC_URL_SAFE)

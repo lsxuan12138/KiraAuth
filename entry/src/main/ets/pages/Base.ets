@@ -50,31 +50,6 @@ export class SteamAccountData {
   account?: steam2faapi.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response
 }
 
-export function isLegacySteamExternal(authdata: Record<string, Object>): boolean {
-  return authdata["sharedSecret"] == undefined && authdata["shardSecret"] != undefined
-}
-
-export function parseSteamExternalAuthData(authdata: Record<string, Object>): SteamAuthData {
-  let steamAuthData = new SteamAuthData()
-  steamAuthData.sharedSecret = authdata["sharedSecret"] as string
-  if (steamAuthData.sharedSecret == undefined) {
-    // 兼容旧版本导出的字段名：shardSecret
-    steamAuthData.sharedSecret = authdata["shardSecret"] as string
-  }
-  steamAuthData.accountName = authdata["accountName"] as string
-  steamAuthData.steamID = authdata["steamID"] as string
-  steamAuthData.serialNumber = authdata["serialNumber"] as string
-  steamAuthData.revocationCode = authdata["revocationCode"] as string
-  steamAuthData.tokenGID = authdata["tokenGID"] as string
-  steamAuthData.identitySecret = authdata["identitySecret"] as string
-  steamAuthData.uri = authdata["uri"] as string
-  steamAuthData.deviceID = authdata["deviceID"] as string
-  steamAuthData.secret1 = authdata["secret1"] as string
-  steamAuthData.accessToken = authdata["accessToken"] as string
-  steamAuthData.refreshToken = authdata["refreshToken"] as string
-  return steamAuthData
-}
-
 export class AuthDataStore {
   public kvStore?: distributedKVStore.DeviceKVStore
   public items: AuthData[] = []
@@ -93,31 +68,21 @@ export class AuthDataStore {
       this.kvStore.getEntries("/data/auth/", (_entryErr, data) => {
         const seen = new Set<string>()
         for (let i = 0; i < data.length; i++) {
-          let element = data[i]
-          let raw = JSON.parse(element.value.value as string) as Record<string, Object>
-          let authdata = this.normalizeStoredAuthData(raw, i)
+          let authdata = JSON.parse(data[i].value.value as string) as AuthData
+          if (authdata.uuid == undefined || authdata.uuid == "") {
+            authdata.uuid = AuthDataStore.computeAuthUuid(authdata.issuer, authdata.account, authdata.secret)
+          }
+          if (authdata.order == undefined) {
+            authdata.order = i
+          }
           authdata.password = this.generatePassword(authdata)
-          const expectedKey = this.buildStorageKey(authdata.uuid)
-          const currentKey = element.key
-          const hasUuid = typeof raw["uuid"] == "string" && (raw["uuid"] as string).length > 0
-          const hasOrder = typeof raw["order"] == "number"
           if (seen.has(authdata.uuid)) {
-            if (currentKey != expectedKey) {
-              this.kvStore?.delete(currentKey)
-            }
             continue
           }
           seen.add(authdata.uuid)
           this.items.push(authdata)
-          if (!hasUuid || !hasOrder || currentKey != expectedKey) {
-            this.persistAuthItem(authdata)
-            if (currentKey != expectedKey) {
-              this.kvStore?.delete(currentKey)
-            }
-          }
         }
         this.items.sort((a, b) => a.order - b.order)
-        this.reindexOrders(false)
         this.notifyChanged()
       })
     })
@@ -129,37 +94,6 @@ export class AuthDataStore {
 
   private buildStorageKey(uuid: string): string {
     return `/data/auth/${uuid}`
-  }
-
-  private normalizeString(value: string | undefined | null, fallback: string = ""): string {
-    if (value == undefined || value == null) {
-      return fallback
-    }
-    return `${value}`
-  }
-
-  private normalizeStoredAuthData(raw: Record<string, Object>, fallbackOrder: number): AuthData {
-    let authdata = new AuthData()
-    authdata.alias = this.normalizeString(raw["alias"] as string)
-    authdata.issuer = this.normalizeString(raw["issuer"] as string)
-    authdata.account = this.normalizeString(raw["account"] as string)
-    authdata.secret = this.normalizeString(raw["secret"] as string)
-    authdata.digits = typeof raw["digits"] == "number" ? raw["digits"] as number : 6
-    authdata.password = this.normalizeString(raw["password"] as string)
-    authdata.external = this.normalizeString(raw["external"] as string)
-    authdata.tokenIconPath = this.normalizeString(raw["tokenIconPath"] as string)
-    authdata.uuid = this.normalizeString(raw["uuid"] as string)
-    if (authdata.uuid == "") {
-      authdata.uuid = AuthDataStore.computeAuthUuid(authdata.issuer, authdata.account, authdata.secret)
-    }
-    if (typeof raw["order"] == "number") {
-      authdata.order = raw["order"] as number
-    } else if (typeof raw["id"] == "number") {
-      authdata.order = raw["id"] as number
-    } else {
-      authdata.order = fallbackOrder
-    }
-    return authdata
   }
 
   private static computeHash(input: string, seed: number): number {
@@ -419,15 +353,14 @@ export class AuthDataStore {
   }
 
   recoverAuthItem(data: string): [number, number] {
-    let result = JSON.parse(data) as Array<Record<string, Object>>
+    let result = JSON.parse(data) as Array<AuthData>
     if (!result) {
       throw new Error(getLocalizedString($r('app.string.base_unknown_file_format')))
     }
     for (let index = 0; index < result.length; index++) {
       const element = result[index];
-      Object.entries(element).forEach((pair: [string, Object]) => {
-        if (pair[0] == 'password' || pair[0] == 'tokenIconPath'
-          || pair[0] == 'uuid' || pair[0] == 'order' || pair[0] == 'id') {
+      Object.entries(element).forEach((pair: [string, string]) => {
+        if (pair[0] == 'password' || pair[0] == 'tokenIconPath' || pair[0] == 'uuid' || pair[0] == 'order') {
           return;
         }
         if (pair[1] == undefined) {
@@ -438,19 +371,12 @@ export class AuthDataStore {
     let hasExist = 0;
     let total = result.length;
     for (let index = 0; index < result.length; index++) {
-      let element = this.normalizeStoredAuthData(result[index], this.items.length)
-      if (element.issuer.toLowerCase() == 'steam' && element.external != '') {
-        let authdata = JSON.parse(element.external) as Record<string, Object>
-        // 兼容旧版备份中的 shardSecret 字段并统一结构
-        if (isLegacySteamExternal(authdata)) {
-          let steamAuthData = parseSteamExternalAuthData(authdata)
-          Object.entries(steamAuthData).forEach((pair: [string, string]) => {
-            if (pair[1] == undefined) {
-              throw new Error(getLocalizedString($r('app.string.base_missing_format'), pair[0]))
-            }
-          })
-          element.external = JSON.stringify(steamAuthData)
-        }
+      let element = result[index]
+      if (element.uuid == undefined || element.uuid == "") {
+        element.uuid = AuthDataStore.computeAuthUuid(element.issuer, element.account, element.secret)
+      }
+      if (element.order == undefined) {
+        element.order = this.items.length
       }
       if (this.containsUuid(element.uuid)) {
         hasExist++;
