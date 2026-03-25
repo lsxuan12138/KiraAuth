@@ -6,7 +6,7 @@ import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { Setting } from './Setting';
 import { userAuth } from '@kit.UserAuthenticationKit';
 import { Detail } from './Detail';
-import { AuthData, AuthDataStore, DefaultToastDuration, PromptParams, SteamAccountData } from './Base';
+import { AuthData, AuthDataStore, copyTextToClipboard, DefaultToastDuration, PromptParams, SteamAccountData } from './Base';
 import { SteamConfirmationList } from './SteamConfirmationList';
 import { SteamConfirmationDetail } from './SteamConfirmationDetail';
 import { Confirmation } from './Steam';
@@ -149,6 +149,14 @@ struct Index {
     })
   }
 
+  copyToken(password: string): void {
+    copyTextToClipboard(password)
+    this.getUIContext().getPromptAction().showToast({
+      duration: DefaultToastDuration,
+      message: $r('app.string.common_token_copied')
+    })
+  }
+
   openTokenIconPicker(item: AuthData) {
     const data = new TokenIconPickerData()
     data.issuer = item.issuer
@@ -254,6 +262,19 @@ struct Index {
                   Text((this.safe && (!this.hideToken || this.showTokens[item.uuid])) ? item.password : "******")
                     .fontSize(20)
                     .fontWeight(FontWeight.Bold)
+                    .gesture(
+                      LongPressGesture()
+                        .onAction(() => {
+                          if (!this.safe) {
+                            this.showSafeModeToast()
+                            return
+                          }
+                          if (this.hideToken && !this.showTokens[item.uuid]) {
+                            return
+                          }
+                          this.copyToken(item.password)
+                        })
+                    )
                     .onClick(() => {
                       if (!this.safe) {
                         this.showSafeModeToast()

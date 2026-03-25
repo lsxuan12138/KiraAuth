@@ -1,6 +1,7 @@
 import {
   AuthData,
   AuthDataStore,
+  copyTextToClipboard,
   DefaultToastDuration,
   PromptParams,
   SteamAuthData
@@ -214,6 +215,21 @@ export struct Detail {
     this.pageStack.pushPathByName("SteamConfirmationList", params)
   }
 
+  showSafeModeToast(): void {
+    this.getUIContext().getPromptAction().showToast({
+      duration: DefaultToastDuration,
+      message: $r('app.string.common_safe_mode_unlock_first')
+    })
+  }
+
+  copyToken(password: string): void {
+    copyTextToClipboard(password)
+    this.getUIContext().getPromptAction().showToast({
+      duration: DefaultToastDuration,
+      message: $r('app.string.common_token_copied')
+    })
+  }
+
   openTokenIconPicker() {
     const data = new TokenIconPickerData()
     data.issuer = this.item.issuer
@@ -328,6 +344,16 @@ export struct Detail {
             .fontWeight(FontWeight.Bold)
             .textAlign(TextAlign.Center)
             .copyOption(CopyOptions.LocalDevice)
+            .gesture(
+              LongPressGesture()
+                .onAction(() => {
+                  if (!this.safe) {
+                    this.showSafeModeToast()
+                    return
+                  }
+                  this.copyToken(this.item.password)
+                })
+            )
         }
         .height(60)
         .alignItems(VerticalAlign.Center)

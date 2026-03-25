@@ -1,4 +1,4 @@
-import { systemDateTime } from '@kit.BasicServicesKit';
+import { pasteboard, systemDateTime } from '@kit.BasicServicesKit';
 import { ComponentContent } from '@kit.ArkUI';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { buffer, JSON, uri, util } from '@kit.ArkTS';
@@ -9,6 +9,12 @@ import * as steam2faapi from './steamapi/service_twofactor';
 import * as googleapi from './googleapi/otpauth_migrate';
 
 export let DefaultToastDuration = 5000
+
+export function copyTextToClipboard(text: string): void {
+  const pasteboardData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text)
+  const systemPasteboard = pasteboard.getSystemPasteboard()
+  systemPasteboard.setData(pasteboardData)
+}
 
 
 export class AuthData {
