@@ -57,6 +57,10 @@
       "value": "Please enter the verification code first."
     },
     {
+      "name": "common_token_copied",
+      "value": "Token copied."
+    },
+    {
       "name": "base_unknown_file_format",
       "value": "Unknown file format."
     },

@@ -57,6 +57,10 @@
       "value": "请先输入验证码。"
     },
     {
+      "name": "common_token_copied",
+      "value": "已复制令牌"
+    },
+    {
       "name": "base_unknown_file_format",
       "value": "未知的文件格式。"
     },
