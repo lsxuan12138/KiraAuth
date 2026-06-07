@@ -192,6 +192,9 @@ function getEResultCode(eResult: string): string {
 }
 
 export class SteamClient {
+  // Steam's password login endpoint provides RSA1024/PKCS#1 key parameters; keep this compatibility transform isolated here.
+  private static readonly STEAM_PASSWORD_RSA_TRANSFORMATION: string = 'RSA1024|PKCS1'
+
   private accessToken: string = ""
   private accessTokenUnixTimestamp: number = 0
   private enhanceNetwork: boolean = false
@@ -459,7 +462,7 @@ export class SteamClient {
         pk: BigInt("0x" + publicKey!.publickey_exp),
       }
       let rsaPublicKey = cryptoFramework.createAsyKeyGeneratorBySpec(rsaSpec).generatePubKeySync()
-      let cipher = cryptoFramework.createCipher('RSA1024|PKCS1');
+      let cipher = cryptoFramework.createCipher(SteamClient.STEAM_PASSWORD_RSA_TRANSFORMATION);
       cipher.initSync(cryptoFramework.CryptoMode.ENCRYPT_MODE, rsaPublicKey, null)
       let dataToEncrypt: cryptoFramework.DataBlob =
         { data: (new util.TextEncoder()).encodeInto(steamPassword) }

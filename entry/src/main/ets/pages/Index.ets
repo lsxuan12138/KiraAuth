@@ -27,6 +27,7 @@ import { TokenIcon } from '../components/TokenIcon';
 import { buildTokenIconPicker, TokenIconPickerData } from '../components/TokenIconPicker';
 import { getLocalizedString } from '../entryability/EntryAbility';
 import { getUIAbilityContext } from '../utils/ContextUtils';
+import { LOG_DOMAIN, LOG_TAG } from '../utils/LogUtils';
 
 @Entry
 @Component
@@ -81,7 +82,7 @@ struct Index {
       return true
     } catch (error) {
       const err: BusinessError = error as BusinessError;
-      hilog.error(0x0001, '[Auth Sample]',
+      hilog.error(LOG_DOMAIN, LOG_TAG,
         `Current auth trust level [${authType}/${authLevel}] is not supported. Code is ${err?.code}, message is ${err?.message}`);
     }
     return false
@@ -128,13 +129,13 @@ struct Index {
           if (result.result == userAuth.UserAuthResultCode.SUCCESS) {
             self.safe = true
           } else {
-            hilog.error(0x0001, '[Auth Sample]', `Failed to auth. Result: ${result.result}`);
+            hilog.error(LOG_DOMAIN, LOG_TAG, `Failed to auth. Result: ${result.result}`);
           }
         }
       });
       userAuthInstance.start();
     } catch (error) {
-      hilog.error(0x0001, '[Auth Sample]',
+      hilog.error(LOG_DOMAIN, LOG_TAG,
         `Failed to auth. Code: ${error.code}, message: ${error.message}`);
     }
   }
@@ -302,7 +303,6 @@ struct Index {
               .borderColor($r("app.color.item_separator_color"))
               .borderWidth({ bottom: 1 })
               .onDragStart((event?: DragEvent, extraParams?: string) => {
-                hilog.debug(0, "testa", `drag start: ${item.uuid}`)
                 this.dragIndex = index
                 this.dragItem = item
               })
@@ -313,7 +313,6 @@ struct Index {
                 if (item.uuid == this.dragItem?.uuid) {
                   return
                 }
-                hilog.debug(0, "testa", `drag enter: ${item.uuid}`)
                 let currentIndex = this.items.findIndex((element) => element.uuid == this.dragItem!.uuid)
                 let targetIndex = this.items.findIndex((element) => element.uuid == item.uuid)
                 this.getUIContext()?.animateTo({
@@ -324,7 +323,6 @@ struct Index {
                 })
               })
               .onDrop((dragEvent: DragEvent) => {
-                hilog.debug(0, "testa", `drop: ${item.uuid}`)
                 this.dragItem = undefined
                 this.authDataStore.replaceAuthItems(this.items)
               })
@@ -332,7 +330,6 @@ struct Index {
                 if (!this.dragItem) {
                   return
                 }
-                hilog.debug(0, "testa", `drag cancel: ${item.uuid}`)
                 let currentIndex = this.items.findIndex((element) => element.uuid == this.dragItem!.uuid)
                 this.getUIContext()?.animateTo({
                   curve: curves.interpolatingSpring(0, 1, 400, 38)
