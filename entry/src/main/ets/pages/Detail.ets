@@ -15,6 +15,7 @@ import { TokenIcon } from '../components/TokenIcon';
 import { buildTokenIconPicker, TokenIconPickerData } from '../components/TokenIconPicker';
 import { getLocalizedString } from '../entryability/EntryAbility';
 import { systemDateTime } from '@kit.BasicServicesKit';
+import { getUIAbilityContext } from '../utils/ContextUtils';
 
 
 class SteamParams {
@@ -181,7 +182,7 @@ export struct Detail {
     let options: scanBarcode.ScanOptions =
       { scanTypes: [scanCore.ScanType.ALL], enableMultiMode: true, enableAlbum: true };
     try {
-      scanBarcode.startScanForResult(getContext(this), options).then((result: scanBarcode.ScanResult) => {
+      scanBarcode.startScanForResult(getUIAbilityContext(this.getUIContext()), options).then((result: scanBarcode.ScanResult) => {
         this.steamClient.approveQRLogin(this.steamAuthData.steamID, this.steamAuthData.refreshToken,
           this.steamAuthData.sharedSecret, false, result.originalValue,
           (err) => {

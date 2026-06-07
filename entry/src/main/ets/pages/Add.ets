@@ -1,6 +1,7 @@
 import { AuthDataStore, DefaultToastDuration } from './Base';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
+import { getUIAbilityContext } from '../utils/ContextUtils';
 
 
 @Component
@@ -112,7 +113,7 @@ export struct Add {
               let selectOptions = new picker.DocumentSelectOptions()
               selectOptions.maxSelectNumber = 1
               selectOptions.fileSuffixFilters = [".atsf"]
-              let viewPicker = new picker.DocumentViewPicker(getContext(this))
+              let viewPicker = new picker.DocumentViewPicker(getUIAbilityContext(this.getUIContext()))
               viewPicker.select(selectOptions).then((uris) => {
                 if (uris.length <= 0) {
                   return

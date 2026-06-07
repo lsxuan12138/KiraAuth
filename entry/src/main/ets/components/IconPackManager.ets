@@ -1,7 +1,7 @@
-import { common } from '@kit.AbilityKit';
 import { AegisIconPack, IconPackRegistry } from '../utils/IconPackUtils';
 import { DefaultToastDuration } from '../pages/Base';
 import { parseInstalledIconPacks, refreshInstalledIconPacks } from '../entryability/EntryAbility';
+import { getUIAbilityContext } from '../utils/ContextUtils';
 
 @Component
 export struct IconPackManager {
@@ -18,7 +18,7 @@ export struct IconPackManager {
   }
 
   private async reloadPacks(): Promise<void> {
-    const context = getContext(this) as common.UIAbilityContext;
+    const context = getUIAbilityContext(this.getUIContext());
     const packs = await refreshInstalledIconPacks(context);
     if (this.selectedIconPackKey !== IconPackRegistry.getDefaultPackKey()
       && !packs.some((pack) => pack.getKey() === this.selectedIconPackKey && !pack.invalid)) {
@@ -52,7 +52,7 @@ export struct IconPackManager {
   }
 
   private async onImportPressed(): Promise<void> {
-    const context = getContext(this) as common.UIAbilityContext;
+    const context = getUIAbilityContext(this.getUIContext());
     try {
       const paths = await IconPackRegistry.pickZipFiles(context);
       if (paths.length === 0) {

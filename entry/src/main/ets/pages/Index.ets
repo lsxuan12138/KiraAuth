@@ -26,6 +26,7 @@ import { curves } from '@kit.ArkUI';
 import { TokenIcon } from '../components/TokenIcon';
 import { buildTokenIconPicker, TokenIconPickerData } from '../components/TokenIconPicker';
 import { getLocalizedString } from '../entryability/EntryAbility';
+import { getUIAbilityContext } from '../utils/ContextUtils';
 
 @Entry
 @Component
@@ -420,7 +421,7 @@ struct Index {
     let options: scanBarcode.ScanOptions =
       { scanTypes: [scanCore.ScanType.ALL], enableMultiMode: true, enableAlbum: true };
     try {
-      scanBarcode.startScanForResult(getContext(this), options).then((result: scanBarcode.ScanResult) => {
+      scanBarcode.startScanForResult(getUIAbilityContext(this.getUIContext()), options).then((result: scanBarcode.ScanResult) => {
         try {
           if (result.originalValue.startsWith("https://s.team/q/")) {
             this.loginSteam(result.originalValue)

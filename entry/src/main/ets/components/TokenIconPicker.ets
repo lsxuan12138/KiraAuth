@@ -1,8 +1,8 @@
-import { common } from '@kit.AbilityKit';
 import { PromptParams } from '../pages/Base';
 import { TokenIcon } from './TokenIcon';
 import { IconPackRegistry, IconPackSection } from '../utils/IconPackUtils';
 import { refreshInstalledIconPacks } from '../entryability/EntryAbility';
+import { getUIAbilityContext } from '../utils/ContextUtils';
 
 interface TokenIconPickerSectionState {
   key: string;
@@ -90,7 +90,7 @@ struct TokenIconPickerContent {
 
   aboutToAppear(): void {
     this.selectedPath = this.currentIconPath ?? '';
-    const context = getContext(this) as common.UIAbilityContext;
+    const context = getUIAbilityContext(this.getUIContext());
     refreshInstalledIconPacks(context).then((packs) => {
       const sections = IconPackRegistry.getIconSections(packs);
       const nextSources: Map<string, IconPathDataSource> = new Map();

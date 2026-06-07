@@ -1,9 +1,10 @@
-import { bundleManager, common, ConfigurationConstant } from '@kit.AbilityKit';
+import { bundleManager, ConfigurationConstant } from '@kit.AbilityKit';
 import { fileIo as fs, picker } from '@kit.CoreFileKit';
 import { AuthDataStore, DefaultToastDuration } from './Base';
 import { ShowPrivacyView } from './PrivacyView';
 import { proxyServer } from './proxy/Proxy';
 import { IconPackManager } from '../components/IconPackManager';
+import { getUIAbilityContext } from '../utils/ContextUtils';
 
 @Component
 export struct Setting {
@@ -38,7 +39,7 @@ export struct Setting {
             Toggle({ type: ToggleType.Switch, isOn: this.enableAutoDarkMode })
               .onChange((isOn) => {
                 this.enableAutoDarkMode = isOn
-                let ctx = getContext(this) as common.UIAbilityContext
+                let ctx = getUIAbilityContext(this.getUIContext())
                 if (this.enableAutoDarkMode) {
                   ctx.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
                 } else {
@@ -161,7 +162,7 @@ export struct Setting {
                 let saveOptions = new picker.DocumentSaveOptions()
                 saveOptions.newFileNames = ["authenticator.atsf"]
                 saveOptions.fileSuffixChoices = [".atsf"]
-                let viewPicker = new picker.DocumentViewPicker(getContext(this))
+                let viewPicker = new picker.DocumentViewPicker(getUIAbilityContext(this.getUIContext()))
                 viewPicker.save(saveOptions).then((uris) => {
                   if (uris.length <= 0) {
                     return
