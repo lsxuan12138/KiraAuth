@@ -16,7 +16,7 @@
         "reason": "$string:ACCESS_BIOMETRIC_reason",
         "usedScene": {
           "abilities": [
-            "FormAbility"
+            "EntryAbility"
           ],
           "when": "inuse"
         }
@@ -26,9 +26,9 @@
         "reason": "$string:CAMERA_reason",
         "usedScene": {
           "abilities": [
-            "FormAbility"
+            "EntryAbility"
           ],
-          "when": "always"
+          "when": "inuse"
         }
       },
       {
@@ -36,7 +36,7 @@
         "reason": "$string:INTERNET_reason",
         "usedScene": {
           "abilities": [
-            "FormAbility"
+            "EntryAbility"
           ],
           "when": "always"
         }
