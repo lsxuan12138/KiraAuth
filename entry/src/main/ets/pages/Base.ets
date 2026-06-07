@@ -3,6 +3,7 @@ import { ComponentContent } from '@kit.ArkUI';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { buffer, JSON, uri, util } from '@kit.ArkTS';
 import { distributedKVStore } from '@kit.ArkData';
+import { asset } from '@kit.AssetStoreKit';
 import { getLocalizedString, kvManager } from '../entryability/EntryAbility';
 import * as steamapi from './steamapi/custom';
 import * as steam2faapi from './steamapi/service_twofactor';
@@ -56,10 +57,17 @@ export class SteamAccountData {
   account?: steam2faapi.CTwoFactor_RemoveAuthenticatorViaChallengeContinue_Response
 }
 
+interface AuthSecretPayload {
+  secret: string;
+  external: string;
+}
+
 export class AuthDataStore {
   public kvStore?: distributedKVStore.DeviceKVStore
   public items: AuthData[] = []
   private onChanged: (items: AuthData[]) => void
+  private textEncoder: util.TextEncoder = new util.TextEncoder()
+  private textDecoder: util.TextDecoder = new util.TextDecoder()
 
   public constructor(onChanged: (items: AuthData[]) => void) {
     this.onChanged = onChanged
@@ -82,12 +90,17 @@ export class AuthDataStore {
           if (authdata.order == undefined) {
             authdata.order = i
           }
+          let migrated = this.migrateLegacySensitiveData(authdata)
+          this.hydrateSensitiveData(authdata)
           authdata.password = this.generatePassword(authdata)
           if (seen.has(authdata.uuid)) {
             continue
           }
           seen.add(authdata.uuid)
           this.items.push(authdata)
+          if (migrated) {
+            this.persistAuthItem(authdata)
+          }
         }
         this.items.sort((a, b) => a.order - b.order)
         this.notifyChanged()
@@ -102,6 +115,90 @@ export class AuthDataStore {
   //重用，不再到处使用字符串，防止写错
   private buildStorageKey(uuid: string): string {
     return `/data/auth/${uuid}`
+  }
+
+  private buildAssetAlias(uuid: string): string {
+    return `kiraauth.authdata.${uuid}`
+  }
+
+  private stringToArray(value: string): Uint8Array {
+    return this.textEncoder.encodeInto(value)
+  }
+
+  private arrayToString(value: Uint8Array): string {
+    return this.textDecoder.decodeToString(value)
+  }
+
+  private buildAssetQuery(uuid: string): asset.AssetMap {
+    let query: asset.AssetMap = new Map()
+    query.set(asset.Tag.ALIAS, this.stringToArray(this.buildAssetAlias(uuid)))
+    return query
+  }
+
+  private persistSensitiveData(item: AuthData): boolean {
+    if (item.secret == "" && item.external == "") {
+      return true
+    }
+    try {
+      let payload: AuthSecretPayload = {
+        secret: item.secret,
+        external: item.external,
+      }
+      let attributes: asset.AssetMap = this.buildAssetQuery(item.uuid)
+      attributes.set(asset.Tag.SECRET, this.stringToArray(JSON.stringify(payload)))
+      attributes.set(asset.Tag.ACCESSIBILITY, asset.Accessibility.DEVICE_FIRST_UNLOCKED)
+      attributes.set(asset.Tag.SYNC_TYPE, asset.SyncType.NEVER)
+      attributes.set(asset.Tag.CONFLICT_RESOLUTION, asset.ConflictResolution.OVERWRITE)
+      asset.addSync(attributes)
+      return true
+    } catch (_) {
+      return false
+    }
+  }
+
+  private hydrateSensitiveData(item: AuthData): void {
+    try {
+      let query = this.buildAssetQuery(item.uuid)
+      query.set(asset.Tag.RETURN_TYPE, asset.ReturnType.ALL)
+      let result = asset.querySync(query)
+      if (result.length <= 0) {
+        return
+      }
+      let payloadText = this.arrayToString(result[0].get(asset.Tag.SECRET) as Uint8Array)
+      let payload = JSON.parse(payloadText) as AuthSecretPayload
+      item.secret = payload.secret ?? ""
+      item.external = payload.external ?? ""
+    } catch (_) {
+    }
+  }
+
+  private removeSensitiveData(uuid: string): void {
+    try {
+      asset.removeSync(this.buildAssetQuery(uuid))
+    } catch (_) {
+    }
+  }
+
+  private migrateLegacySensitiveData(item: AuthData): boolean {
+    if (item.secret == "" && item.external == "") {
+      return false
+    }
+    return this.persistSensitiveData(item)
+  }
+
+  private buildMetadataItem(item: AuthData): AuthData {
+    let metadata = new AuthData()
+    metadata.uuid = item.uuid
+    metadata.order = item.order
+    metadata.alias = item.alias
+    metadata.issuer = item.issuer
+    metadata.account = item.account
+    metadata.digits = item.digits
+    metadata.password = ""
+    metadata.secret = ""
+    metadata.external = ""
+    metadata.tokenIconPath = item.tokenIconPath
+    return metadata
   }
 
   private static computeHash(input: string, seed: number): number {
@@ -136,7 +233,8 @@ export class AuthDataStore {
    * 持久化
    */
   private persistAuthItem(item: AuthData): void {
-    let authString = JSON.stringify(item)
+    let authString = this.persistSensitiveData(item) ?
+      JSON.stringify(this.buildMetadataItem(item)) : JSON.stringify(item)
     this.kvStore?.put(this.buildStorageKey(item.uuid), authString)
   }
 
@@ -252,6 +350,9 @@ export class AuthDataStore {
   }
 
   generatePassword(authdata: AuthData): string {
+    if (authdata.secret == "") {
+      return ""
+    }
     let keyData: Uint8Array = AuthDataStore.base32Decode(authdata.secret)
     let seconds = systemDateTime.getTime(false) / 1000
     return AuthDataStore.calculatePassword(keyData, seconds, authdata.digits)
@@ -283,6 +384,7 @@ export class AuthDataStore {
     }
     let item = this.items[index]
     this.kvStore?.delete(this.buildStorageKey(item.uuid))
+    this.removeSensitiveData(item.uuid)
     this.items.splice(index, 1)
     this.reindexOrders()
     this.notifyChanged()
@@ -429,7 +531,8 @@ export class AuthDataStore {
       seen.add(item.uuid)
       item.order = nextItems.length
       nextItems.push(item)
-      let authString = JSON.stringify(item)
+      let authString = this.persistSensitiveData(item) ?
+        JSON.stringify(this.buildMetadataItem(item)) : JSON.stringify(item)
       entries.push({
         key: this.buildStorageKey(item.uuid),
         value: {
@@ -444,6 +547,7 @@ export class AuthDataStore {
     await this.kvStore?.putBatch(entries)
     if (deleteKeys.length > 0) {
       await this.kvStore?.deleteBatch(deleteKeys)
+      deleteKeys.forEach((key) => this.removeSensitiveData(key.substring("/data/auth/".length)))
     }
     this.items = nextItems
     this.notifyChanged()
