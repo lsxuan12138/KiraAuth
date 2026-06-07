@@ -212,13 +212,21 @@ export class SteamClient {
       options.header["Proxy-Auth-Token"] = proxyAuthToken
     }
     let req = http.createHttp()
-    req.request(urlPath, options, callback)
+    req.request(urlPath, options, (err, resp) => {
+      try {
+        callback(err, resp)
+      } finally {
+        req.destroy()
+      }
+    })
   }
 
   generateAccessToken(steamID: string, refreshToken: string,
     callback: (err: Error | null, token: string) => void) {
-    if (this.accessTokenUnixTimestamp - 120000 > (new Date()).getTime()) {
+    const now = Math.floor(systemDateTime.getTime(false) / 1000)
+    if (this.accessToken != "" && this.accessTokenUnixTimestamp - 120 > now) {
       callback(null, this.accessToken)
+      return
     }
 
     let url = "https://api.steampowered.com/IAuthenticationService/GenerateAccessTokenForApp/v1/"
